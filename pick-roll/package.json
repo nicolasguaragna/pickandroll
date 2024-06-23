@@ -1,0 +1,23 @@
+{
+  "name": "pick-roll",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "autoprefixer": "^10.4.19",
+    "tailwindcss": "^3.4.3",
+    "vite": "^5.2.0"
+  },
+  "dependencies": {
+    "date-fns": "^3.6.0",
+    "firebase": "^10.12.0",
+    "vue": "^3.4.27",
+    "vue-router": "^4.3.2"
+  }
+}
