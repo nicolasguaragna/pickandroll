@@ -95,18 +95,18 @@ export default {
                     class="border rounded p-4 min-h-[300px]"
                 >
                 <ul 
-                    v-if="messagesLoaded"                   
+                    v-if="messagesLoaded"
+                    class="flex flex-col items-start"                
                 >
                     <li 
                         v-for="message in messages"
-                        class="mb-4"
+                        class="mb-4 rounded"
+                        :class="{
+                            'bg-orange-200': message.sender_id === authUser.id,
+                            'self-end': message.sender_id === authUser.id,
+                            'bg-gray-200': message.sender_id !== authUser.id,
+                        }"
                     >
-                        <p>
-                            <b> 
-                                {{ message.email }} 
-                                dijo:
-                            </b>
-                        </p>
                         <p>{{ message.content }}</p>
                         <p>{{ formatDate(message.created_at) }}</p>
                     </li>
