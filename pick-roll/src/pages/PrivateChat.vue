@@ -4,9 +4,10 @@ import MainButton from '../components/MainButton.vue';
 import MainH1 from '../components/MainH1.vue';
 import { getUserProfileById} from '../services/perfil-usuario';
 import { subscribeToAuth } from '../services/auth';
+import { sendPrivateChatMessage } from '../services/private-chat';
 
 export default {
-    name: 'ChatPrivado',
+    name: 'PrivateChat',
     components: {MainH1, Loader, MainButton},
     data() {
         return {
@@ -38,14 +39,11 @@ export default {
         }        
     },
     methods: {
-        sendMessage() {
-            this.sendingMessage = true;
+        async sendMessage() {
+            //this.sendingMessage = true;
 
-            //saveMessage({
-              //  user_id: this.authUser.id,
-             //   email: this.authUser.email,
-             //   content: this.newMessage.content,
-           // }).then(() => this.sendingMessage = false); 
+            await sendPrivateChatMessage(this.authUser.id, this.user.id, this.newMessage.content);
+            
             this.newMessage.content = "";
         },
         formatDate(date) {
