@@ -1,11 +1,12 @@
 <script>
 import Loader from '../components/Loader.vue';
 import MainH1 from '../components/MainH1.vue';
-import { getUserProfileById } from '../services/perfil-usuario';
+import UserProfileData from '../components/UserProfileData.vue';
+import { getUserProfileById } from '../services/user-profile';
 
 export default {
-    name: 'PerfilUsuario',
-    components: {MainH1, Loader},
+    name: 'UserProfile',
+    components: {MainH1, Loader, UserProfileData},
     data() {
         return {
             user: {
@@ -31,6 +32,6 @@ export default {
 
         <hr class="mb-4"/>
 
-        <router-link :too="`/usuario/${user.id}/chat`" class="text-green-400 underline"></router-link>
+        <router-link :too="`/usuario/${user.id}/chat`" class="text-green-400 underline">Chatear con {{ user.email }}</router-link>
     </template>
 </template>

@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp, setDoc} from "firebase/firestore";
 import { db } from "./firebase";
 
 /**
@@ -26,11 +26,39 @@ export async function sendPrivateChatMessage(senderId, receiverId, message) {
         created_at: serverTimestamp(),
     });
 
+    return {
+        id: newDoc.id,
+    }
 }
 
-export function subscribeToPrivateChat (senderId, receiverId, callback) {
-    
+/**
+ * 
+ * @param {string} senderId 
+ * @param {string} receiverId 
+ * @param {() => {}} callback 
+ * @returns {() => void} - Función para cancelar la suscripción.
+ */
+export function subscribeToPrivateChat(senderId, receiverId, callback) {
+    const chatId = generatePrivateChatId(senderId, receiverId);
+
+    const messagesRef = collection(db, `private-chats/${chatId}/messages`);
+
+    const q = query(messagesRef, orderBy('created_at'));
+
+    return onSnapshot(q, snapshot => {
+        const messages = snapshot.docs.map(aDoc => {
+            return {
+                id: aDoc.id,
+                sender_id: aDoc.data().sender_id,
+                content: aDoc.data().content,
+                created_at: aDoc.data().created_at?.toDate(),
+            }
+        });
+
+        callback(messages);
+    });
 }
+
 
 /**
  * retorna el id de la sala de chat privado entre ambos usuarios.

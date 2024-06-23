@@ -4,7 +4,7 @@ import { getUserPublicaciones, getUserData, updateUserProfile, changeUserPasswor
 import { format } from 'date-fns';
 
 export default {
-  name: 'MiPerfil',
+  name: 'MiProfile',
   components: { MainH1 },
   data() {
     return {

@@ -3,8 +3,9 @@ import Home from "../pages/Home.vue";
 import Chat from "../pages/Chat.vue";
 import Publicaciones from "../pages/Publicaciones.vue";
 import Login from "../pages/Login.vue";
-import MiPerfil from "../pages/MiPerfil.vue";
-import PerfilUsuario from "../pages/PerfilUsuario.vue";
+import MyProfile from "../pages/MyProfile.vue";
+import MyProfileEdit from "../pages/MyProfileEdit.vue";
+import UserProfile from "../pages/UserProfile.vue";
 import Register from "../pages/Register.vue";
 import PrivateChat from "../pages/PrivateChat.vue";
 import { subscribeToAuth } from "../services/auth";
@@ -15,8 +16,9 @@ const routes = [
     {path: '/publicaciones', component: Publicaciones, meta:{ requiresAuth: true } },
     {path: '/iniciar-sesion', component: Login, },
     {path: '/registro', component: Register, },
-    {path: '/miperfil', component: MiPerfil, meta: { requiresAuth: true } },
-    {path: '/usuario/:id', component: PerfilUsuario, meta: { requiresAuth: true } },
+    {path: '/miperfil', component: MyProfile, meta: { requiresAuth: true } },
+    { path: '/miperfil/editar', component: MyProfileEdit, meta: { requiresAuth: true } },
+    {path: '/usuario/:id', component: UserProfile, meta: { requiresAuth: true } },
     {path: '/usuario/:id/chat', component: PrivateChat, meta: { requiresAuth: true } },
 ];
 

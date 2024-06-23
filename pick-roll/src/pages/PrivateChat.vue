@@ -2,7 +2,7 @@
 import Loader from '../components/Loader.vue';
 import MainButton from '../components/MainButton.vue';
 import MainH1 from '../components/MainH1.vue';
-import { getUserProfileById} from '../services/perfil-usuario';
+import { getUserProfileById} from '../services/user-profile';
 import { subscribeToAuth } from '../services/auth';
 import { sendPrivateChatMessage, subscribeToPrivateChat} from '../services/private-chat';
 
@@ -39,10 +39,10 @@ export default {
         }        
     },
     methods: {
-        async sendMessage() {
+        sendMessage() {
             //this.sendingMessage = true;
 
-            await sendPrivateChatMessage(this.authUser.id, this.user.id, this.newMessage.content);
+            sendPrivateChatMessage(this.authUser.id, this.user.id, this.newMessage.content);
             
             this.newMessage.content = "";
         },
@@ -59,8 +59,16 @@ export default {
         }
     },
     async mounted() {
-
         this.unsubscribeFromAuth = subscribeToAuth(newUserData => this.authUser = newUserData);
+        this.messagesLoaded = false;
+        this.unsubscribeFromChat = subscribeToPrivateChat(
+            this.authUser.id, 
+            this.$route.params.id, 
+            newMessages => {
+                this.messagesLoaded = true;
+                this.messages = newMessages;    
+            }
+        );
 
         this.userLoaded = false;
         //datos del perfil del usuario

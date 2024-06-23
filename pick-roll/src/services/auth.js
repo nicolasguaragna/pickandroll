@@ -1,7 +1,7 @@
 import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile, updatePassword } from "firebase/auth";
 import { auth, db } from "./firebase";
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, Timestamp } from "firebase/firestore"; // Importa los métodos necesarios de Firestore
-import { createUserProfile } from "./perfil-usuario";
+import { createUserProfile, getUserProfileById, updateUserProfile } from "./user-profile";
 
 const EMPTY_USER_DATA = {
     id: null,
@@ -75,6 +75,40 @@ export function login(email, password) {
         console.error("[auth.js login] Error al autenticar:", error.code);
         throw error;
     });
+}
+
+/**
+ * 
+ * @param {{displayName: string|null, career: string|null, bio: string|null}}
+ * @returns {Promise<void>}
+ */
+export async function updateUser({displayName, career, bio}) {
+    // Editar el perfil implica grabar algunos datos en distintos lugares.
+    // Esto se debe a que por la arquitectura de Firebase, la info del usuario la tenemos dispersa en diferentes servicios.
+    // En Firebase Authentication, nosotros solo podemos grabar los datos displayName y photoURL, que son los que la
+    // plataforma contempla.
+    // En Firestore, vamos a guardar también displayName y photoURL, para que puedan ser accedidos por nuestra web.
+    // El resto de los datos, como bio y career, vamos a tener que guardarlos solo en Firestore.
+    try {
+        // Pedimos actualizar los datos en Authentication.
+        const authPromise = updateProfile(auth.currentUser, {displayName});
+
+        // Ahora pedimos actualizar la data del perfil del usuario en Firestore.
+        const firestorePromise = updateUserProfile(userData.id, {displayName, bio, career});
+
+        // Esperamos a que ambas peticiones (promesas) se completen con ayuda de la función Promise.all().
+        await Promise.all([authPromise, firestorePromise]);
+
+        // Finalmente, actualizamos y notificamos los cambios de los datos del perfil.
+        setUserData({
+            displayName,
+            bio,
+            career,
+        });
+    } catch (error) {
+        // TODO: Manejar el error.
+        throw error;
+    }
 }
 
 /**
@@ -178,23 +212,6 @@ export function getUserData() {
     return userData;
 }
 
-export async function updateUserProfile(userId, newProfileData) {
-    try {
-        // Actualiza los datos del usuario en Firestore
-        const userRef = doc(db, "users", userId);
-        await updateDoc(userRef, newProfileData);
-
-        // Si también deseas actualizar el perfil en Firebase Auth
-        if (auth.currentUser) {
-            await updateProfile(auth.currentUser, newProfileData);
-        }
-
-        console.log("Perfil del usuario actualizado con éxito.");
-    } catch (error) {
-        console.error("Error al actualizar el perfil del usuario:", error);
-        throw error;
-    }
-}
 
 export async function changeUserPassword(newPassword) {
     try {
