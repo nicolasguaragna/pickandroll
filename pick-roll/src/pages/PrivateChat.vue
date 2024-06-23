@@ -108,7 +108,8 @@ export default {
                         }"
                     >
                         <p>{{ message.content }}</p>
-                        <p>{{ formatDate(message.created_at) }}</p>
+                        <p v-if="message.created_at != null">{{ formatDate(message.created_at) }}</p>
+                        <p v-else>Enviando...</p>
                     </li>
                 </ul>
                 <Loader

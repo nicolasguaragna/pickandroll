@@ -88,7 +88,8 @@ export default {
                   </b>
                 </p>
                 <p>{{ message.content }}</p>
-                <p class="text-gray-500 text-sm">{{ formatDate(message.created_at) }}</p>
+                <p v-if="message.created_at != null">{{ formatDate(message.created_at) }}</p>
+                <p v-else>Enviando...</p>
               </li>
             </ul>
             <Loader v-else />
