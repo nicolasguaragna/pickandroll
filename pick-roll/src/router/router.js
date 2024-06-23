@@ -6,7 +6,7 @@ import Login from "../pages/Login.vue";
 import MiPerfil from "../pages/MiPerfil.vue";
 import PerfilUsuario from "../pages/PerfilUsuario.vue";
 import Register from "../pages/Register.vue";
-import ChatPrivado from "../pages/ChatPrivado.vue";
+import PrivateChat from "../pages/PrivateChat.vue";
 import { subscribeToAuth } from "../services/auth";
 
 const routes = [
@@ -17,7 +17,7 @@ const routes = [
     {path: '/registro', component: Register, },
     {path: '/miperfil', component: MiPerfil, meta: { requiresAuth: true } },
     {path: '/usuario/:id', component: PerfilUsuario, meta: { requiresAuth: true } },
-    {path: '/usuario/:id/chat', component: ChatPrivado, meta: { requiresAuth: true } },
+    {path: '/usuario/:id/chat', component: PrivateChat, meta: { requiresAuth: true } },
 ];
 
 const router = createRouter({

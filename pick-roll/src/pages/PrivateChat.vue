@@ -4,7 +4,7 @@ import MainButton from '../components/MainButton.vue';
 import MainH1 from '../components/MainH1.vue';
 import { getUserProfileById} from '../services/perfil-usuario';
 import { subscribeToAuth } from '../services/auth';
-import { sendPrivateChatMessage } from '../services/private-chat';
+import { sendPrivateChatMessage, subscribeToPrivateChat} from '../services/private-chat';
 
 export default {
     name: 'PrivateChat',
