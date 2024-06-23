@@ -1,12 +1,18 @@
 import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile, updatePassword } from "firebase/auth";
-import { auth, db } from "./firebase";
-import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, Timestamp } from "firebase/firestore"; // Importa los métodos necesarios de Firestore
+import { auth } from "./firebase";
+import { collection, query, where, orderBy, onSnapshot, doc, Timestamp } from "firebase/firestore"; // Importa los métodos necesarios de Firestore
 import { createUserProfile, getUserProfileById, updateUserProfile } from "./user-profile";
 
 const EMPTY_USER_DATA = {
     id: null,
     email: null,
-};
+    displayName: null,
+    career: null,
+    bio: null,
+    photoURL: null,
+    // Flag para decir si ya se cargó el perfil completo.
+    fullyLoaded: false,
+}
 
 // Variable para los datos del usuario
 let userData = EMPTY_USER_DATA;
@@ -16,19 +22,24 @@ let observers = [];
 
 // Guardo en localStorage datos del usuario autenticado
 if (localStorage.getItem('user') !== null) {
-    try {
-        userData = JSON.parse(localStorage.getItem('user'));
-    } catch (e) {
-        console.error("Error parsing user data from localStorage", e);
-    }
+    userData = JSON.parse(localStorage.getItem('user'));
 }
 
 // Actualizo el estado del usuario dependiendo del estado en la autenticación.
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async user => {
     if (user) {
         setUserData({
             id: user.uid,
             email: user.email,
+            displayName: user.displayName,
+        });
+
+        // Ahora que verificamos cuál es el usuario que está autenticado, procedemos a obtener el perfil completo.
+        const userProfile = await getUserProfileById(user.uid);
+        setUserData({
+            bio: userProfile.bio,
+            career: userProfile.career,
+            fullyLoaded: true, // Indicamos que ahora sí el perfil se cargó completamente.
         });
     } else {
         setUserData(EMPTY_USER_DATA);
@@ -66,10 +77,6 @@ export function login(email, password) {
     return signInWithEmailAndPassword(auth, email, password)
     .then(userCredentials => {
         console.log("Usuario autenticado. ID:", userCredentials.user.uid);
-        setUserData({
-            id: userCredentials.user.uid,
-            email: userCredentials.user.email,
-        });
     })
     .catch(error => {
         console.error("[auth.js login] Error al autenticar:", error.code);
@@ -129,8 +136,7 @@ export function logout() {
 export function subscribeToAuth(callback){
     observers.push(callback);
 
-    console.log("[auth.js subscribeToAuth] Observer suscrito. El stack actual es:", observers);
-
+    //console.log("[auth.js subscribeToAuth] Observer suscrito. El stack actual es:", observers);
     notify(callback);
 
     // Retorno nueva función, al ejecutarse cancela la suscripción. 
@@ -169,11 +175,7 @@ function setUserData(newData) {
     };
 
     // Guardo en localStorage los nuevos datos
-    try {
-        localStorage.setItem('user', JSON.stringify(userData));
-    } catch (e) {
-        console.error("Error storing user data to localStorage", e);
-    }
+    localStorage.setItem('user', JSON.stringify(userData));
 
     notifyAll();
 }
@@ -211,7 +213,6 @@ export function getUserPublicaciones(userEmail, callback) {
 export function getUserData() {
     return userData;
 }
-
 
 export async function changeUserPassword(newPassword) {
     try {
