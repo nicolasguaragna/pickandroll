@@ -36,7 +36,7 @@ export default {
     <template v-if="authUser.fullyLoaded">
         <div class="flex items-end gap-4">
             <MainH1>Mi Perfil</MainH1>
-            <router-link class="mb-4 text-blue-700 underline" to="/perfil/editar">Editar</router-link>
+            <router-link class="mb-4 text-blue-700 underline" to="/miperfil/editar">Editar</router-link>
         </div>
 
         <UserProfileData :user="authUser" />
