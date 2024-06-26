@@ -35,6 +35,7 @@ let authUser = {
 
 subscribeToAuth(newUserData => authUser = newUserData);
 
+//se ejecuta antes de cada cambio de ruta.
 router.beforeEach((to, from) => {
     //console.log('[router] Navegando a la ruta...', to.path);
     //para acceder al chat el usuario debe estar autenticado.

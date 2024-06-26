@@ -7,8 +7,9 @@ const EMPTY_USER_DATA = {
     id: null,
     email: null,
     displayName: null,
-    career: null,
     bio: null,
+    nbaFavorites: null,
+    location: null,
     photoURL: null,
     // Flag para decir si ya se cargó el perfil completo.
     fullyLoaded: false,
