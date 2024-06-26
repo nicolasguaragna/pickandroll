@@ -15,7 +15,8 @@ export default {
                 email: '',
                 displayName: '',
                 bio: '',
-                career: '',
+                nbaFavorites: '',
+                location: '',
                 photoURL: null,
             },
             unsubscribeFromAuth: () => {},
@@ -23,7 +24,8 @@ export default {
             profileData: {
                 displayName: '',
                 bio: '',
-                career: '',
+                nbaFavorites: '',
+                location: '',
                 // photoURL: null,
             },
             editingProfile: false,
@@ -36,7 +38,8 @@ export default {
                 await updateUser({
                     displayName: this.profileData.displayName,
                     bio: this.profileData.bio,
-                    career: this.profileData.career,
+                    nbaFavorites: this.profileData.nbaFavorites,
+                    location: this.profileData.location,
                 });
             } catch (error) {
                 // TODO
@@ -51,8 +54,9 @@ export default {
 
             // Aprovechamos para setear los valores iniciales del formulario de edición.
             this.profileData.displayName = this.authUser.displayName;
-            this.profileData.career = this.authUser.career;
+            this.profileData.nbaFavorites = this.authUser.nbaFavorites;
             this.profileData.bio = this.authUser.bio;
+            this.profileData.location = this.authUser.location;
         });
     },
     unmounted() {
@@ -88,13 +92,23 @@ export default {
             >
         </div>
         <div class="mb-3">
-            <MainLabel for="career">Carrera</MainLabel>
+            <MainLabel for="nbaFavorites">Favoritos de la NBA</MainLabel>
             <input
                 type="text"
-                id="career"
+                id="nbaFavorites"
                 class="w-full p-2 border border-gray-300 rounded disabled:bg-gray-100"
                 :disabled="editingProfile"
-                v-model="profileData.career"
+                v-model="profileData.nbaFavorites"
+            >
+        </div>
+        <div class="mb-3">
+            <MainLabel for="nbaFavorites">Ubicación</MainLabel>
+            <input
+                type="text"
+                id="nbaFavorites"
+                class="w-full p-2 border border-gray-300 rounded disabled:bg-gray-100"
+                :disabled="editingProfile"
+                v-model="profileData.location"
             >
         </div>
         <MainButton :disabled="editingProfile">Actualizar mis datos</MainButton>

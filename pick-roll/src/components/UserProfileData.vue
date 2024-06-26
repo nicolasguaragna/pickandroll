@@ -33,9 +33,13 @@ export default {
             <i v-else>Sin especificar</i> -->
             <TextWithDefault :value="user.displayName" />
         </dd>
-        <dt class="font-bold">Carrera</dt>
+        <dt class="font-bold">Favoritos de la NBA</dt>
         <dd class="mb-3">
-            <TextWithDefault :value="user.career" />
+            <TextWithDefault :value="user.nbaFavorites" />
+        </dd>
+        <dt class="font-bold">Ubicación</dt>
+        <dd class="mb-3">
+            <TextWithDefault :value="user.location" />
         </dd>
     </dl>
 </template>
