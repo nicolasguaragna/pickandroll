@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from "vue-router";
+import { createRouter, createWebHashHistory, createWebHistory } from "vue-router";
 import Home from "../pages/Home.vue";
 import Chat from "../pages/Chat.vue";
 import Publicaciones from "../pages/Publicaciones.vue";
@@ -11,14 +11,14 @@ import PrivateChat from "../pages/PrivateChat.vue";
 import { subscribeToAuth } from "../services/auth";
 
 const routes = [
-    {path: '/', component: Home, },
-    {path: '/chat', component: Chat,  meta: { requiresAuth: true } },
-    {path: '/publicaciones', component: Publicaciones, meta:{ requiresAuth: true } },
-    {path: '/iniciar-sesion', component: Login, },
-    {path: '/registro', component: Register, },
-    {path: '/miperfil', component: MyProfile, meta: { requiresAuth: true } },
+    {path: '/',                 component: Home, },
+    {path: '/chat',             component: Chat,  meta: { requiresAuth: true } },
+    {path: '/publicaciones',    component: Publicaciones, meta:{ requiresAuth: true } },
+    {path: '/iniciar-sesion',   component: Login, },
+    {path: '/registro',         component: Register, },
+    {path: '/miperfil',         component: MyProfile, meta: { requiresAuth: true } },
     { path: '/miperfil/editar', component: MyProfileEdit, meta: { requiresAuth: true } },
-    {path: '/usuario/:id', component: UserProfile, meta: { requiresAuth: true } },
+    {path: '/usuario/:id',      component: UserProfile, meta: { requiresAuth: true } },
     {path: '/usuario/:id/chat', component: PrivateChat, meta: { requiresAuth: true } },
 ];
 
