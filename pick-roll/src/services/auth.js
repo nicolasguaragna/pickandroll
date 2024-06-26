@@ -11,7 +11,6 @@ const EMPTY_USER_DATA = {
     nbaFavorites: null,
     location: null,
     photoURL: null,
-    // Flag para decir si ya se cargó el perfil completo.
     fullyLoaded: false,
 }
 
@@ -39,8 +38,9 @@ onAuthStateChanged(auth, async user => {
         const userProfile = await getUserProfileById(user.uid);
         setUserData({
             bio: userProfile.bio,
-            career: userProfile.career,
-            fullyLoaded: true, // Indicamos que ahora sí el perfil se cargó completamente.
+            nbaFavorites: userProfile.nbaFavorites,
+            location: userProfile.location,
+            fullyLoaded: true,
         });
     } else {
         setUserData(EMPTY_USER_DATA);
@@ -87,10 +87,10 @@ export function login(email, password) {
 
 /**
  * 
- * @param {{displayName: string|null, bio: string|null}}
+ * @param {{displayName: string|null, bio: string|null, nbaFavorites: string|null, location: string|null }}
  * @returns {Promise<void>}
  */
-export async function updateUser({displayName, bio}) {
+export async function updateUser({displayName, bio, nbaFavorites, location}) {
     // Editar el perfil implica grabar algunos datos en distintos lugares.
     // Esto se debe a que por la arquitectura de Firebase, la info del usuario la tenemos dispersa en diferentes servicios.
     // En Firebase Authentication, nosotros solo podemos grabar los datos displayName y photoURL, que son los que la
@@ -102,15 +102,17 @@ export async function updateUser({displayName, bio}) {
         const authPromise = updateProfile(auth.currentUser, {displayName});
 
         // Ahora pedimos actualizar la data del perfil del usuario en Firestore.
-        const firestorePromise = updateUserProfile(userData.id, {displayName, bio});
+        const firestorePromise = updateUserProfile(userData.id, {displayName, bio, nbaFavorites, location});
 
         // Espero a que ambas promesas se completen, con ayuda de la función Promise.all().
         await Promise.all([authPromise, firestorePromise]);
 
-        // Finalmente, actualizo y notifico los cambios de los datos del perfil.
+        // Actualizo y notifico los cambios de los datos del perfil.
         setUserData({
             displayName,
             bio,
+            nbaFavorites,
+            location,
         });
     } catch (error) {
         // TODO: Manejar el error.

@@ -30,6 +30,7 @@ export default {
     <template v-else>
         <MainH1>Perfil de {{ user.email }}</MainH1>
 
+        <UserProfileData :user="user" />
         <hr class="mb-4"/>
 
         <router-link :too="`/usuario/${user.id}/chat`" class="text-green-400 underline">Chatear con {{ user.email }}</router-link>

@@ -3,13 +3,14 @@ import MainH1 from '../components/MainH1.vue';
 import MainLabel from '../components/MainLabel.vue';
 // import MainInput from '../components/MainInput.vue';
 import MainButton from '../components/MainButton.vue';
-import { subscribeToAuth } from '../services/auth';
+import { subscribeToAuth, updateUser } from '../services/auth';
 
 export default {
     name: 'MyProfileEdit',
     components: { MainH1, MainLabel, MainButton },
     data() {
         return {
+            // Nos trae los datos ya definidos del usuario autenticado
             authUser: {
                 id: '',
                 email: '',
@@ -52,7 +53,7 @@ export default {
         this.unsubscribeFromAuth = subscribeToAuth(newUserData => {
             this.authUser = newUserData;
 
-            // Aprovechamos para setear los valores iniciales del formulario de edición.
+            // Seteo los valores iniciales del formulario de edición
             this.profileData.displayName = this.authUser.displayName;
             this.profileData.nbaFavorites = this.authUser.nbaFavorites;
             this.profileData.bio = this.authUser.bio;
@@ -102,7 +103,7 @@ export default {
             >
         </div>
         <div class="mb-3">
-            <MainLabel for="nbaFavorites">Ubicación</MainLabel>
+            <MainLabel for="location">Ubicación</MainLabel>
             <input
                 type="text"
                 id="nbaFavorites"

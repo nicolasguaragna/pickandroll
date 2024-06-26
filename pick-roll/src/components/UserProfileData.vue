@@ -15,14 +15,11 @@ export default {
 </script>
 
 <template>
-    <!-- <p class="mb-4">{{ user.bio || 'Una breve biografía del usuario...' }}</p -->
-        <!-- v-if="user.fullyLoaded" -->
     <p 
         class="mb-4"
     >
-        <TextWithDefault :value="user.bio" default-value="Una breve biografía del usuario..." />
+        <TextWithDefault :value="user.bio" default-value="Breve biografía del usuario..." />
     </p>
-    <!-- <Loader v-else /> -->
 
     <dl>
         <dt class="font-bold">Email</dt>

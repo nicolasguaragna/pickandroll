@@ -18,7 +18,8 @@ export async function getUserProfileById(id) {
         email: userDoc.data().email,
         displayName: userDoc.data().displayName,
         bio: userDoc.data().bio,
-        career: userDoc.data().career,
+        nbaFavorites: userDoc.data().nbaFavorites,
+        location: userDoc.data().location,
         // photoURL: userDoc.data().photoURL,
     }
 }
