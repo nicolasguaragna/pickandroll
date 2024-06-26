@@ -87,10 +87,10 @@ export function login(email, password) {
 
 /**
  * 
- * @param {{displayName: string|null, career: string|null, bio: string|null}}
+ * @param {{displayName: string|null, bio: string|null}}
  * @returns {Promise<void>}
  */
-export async function updateUser({displayName, career, bio}) {
+export async function updateUser({displayName, bio}) {
     // Editar el perfil implica grabar algunos datos en distintos lugares.
     // Esto se debe a que por la arquitectura de Firebase, la info del usuario la tenemos dispersa en diferentes servicios.
     // En Firebase Authentication, nosotros solo podemos grabar los datos displayName y photoURL, que son los que la
@@ -102,16 +102,15 @@ export async function updateUser({displayName, career, bio}) {
         const authPromise = updateProfile(auth.currentUser, {displayName});
 
         // Ahora pedimos actualizar la data del perfil del usuario en Firestore.
-        const firestorePromise = updateUserProfile(userData.id, {displayName, bio, career});
+        const firestorePromise = updateUserProfile(userData.id, {displayName, bio});
 
-        // Esperamos a que ambas peticiones (promesas) se completen con ayuda de la función Promise.all().
+        // Espero a que ambas promesas se completen, con ayuda de la función Promise.all().
         await Promise.all([authPromise, firestorePromise]);
 
-        // Finalmente, actualizamos y notificamos los cambios de los datos del perfil.
+        // Finalmente, actualizo y notifico los cambios de los datos del perfil.
         setUserData({
             displayName,
             bio,
-            career,
         });
     } catch (error) {
         // TODO: Manejar el error.
