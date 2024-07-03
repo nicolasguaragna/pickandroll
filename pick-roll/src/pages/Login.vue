@@ -37,7 +37,7 @@ export default {
 
 <div class="min-h-screen flex">
     <!-- Sección de Imagen -->
-    <div class="hidden md:block w-1/2 bg-cover bg-center bg-no-repeat" style="background-image: url('/public/NBA-logo.png'); background-size: 70%;"></div>
+    <div class="hidden md:block w-1/2 bg-cover bg-center bg-no-repeat" style="background-image: url('/NBA-logo.png'); background-size: 70%;"></div>
 
     <!-- Sección de Formulario -->
     <div class="w-full md:w-1/2 flex items-center justify-center p-8">

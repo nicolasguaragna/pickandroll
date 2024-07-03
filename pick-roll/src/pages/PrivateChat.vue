@@ -60,15 +60,16 @@ export default {
     },
     async mounted() {
         this.unsubscribeFromAuth = subscribeToAuth(newUserData => this.authUser = newUserData);
+        
         this.messagesLoaded = false;
-        this.unsubscribeFromChat = subscribeToPrivateChat(
+        subscribeToPrivateChat(
             this.authUser.id, 
             this.$route.params.id, 
             newMessages => {
                 this.messagesLoaded = true;
-                this.messages = newMessages;    
+                this.messages = newMessages;
             }
-        );
+        ).then(unsubscribe => this.unsubscribeFromChat = unsubscribe);
 
         this.userLoaded = false;
         //datos del perfil del usuario

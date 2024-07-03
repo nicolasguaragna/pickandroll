@@ -17,9 +17,9 @@ export async function sendPrivateChatMessage(senderId, receiverId, message) {
     const chatId = generatePrivateChatId(senderId, receiverId);
 
     // creo documento del chat privado, si no existe.
-    await existOrCreatePrivateChat(senderId, receiverId);
+    await existsOrCreatePrivateChat(senderId, receiverId);
 
-    const messageRef = collection(db, `private-chat/${chatId}/messages`);
+    const messageRef = collection(db, `private-chats/${chatId}/messages`);
     const newDoc = await addDoc(messageRef, {
         sender_id: senderId,
         content: message,
@@ -38,7 +38,7 @@ export async function sendPrivateChatMessage(senderId, receiverId, message) {
  * @param {string} receiverId 
  * @returns {Promise<void>}
  */
-async function existOrCreatePrivateChat(senderId, receiverId) {
+async function existsOrCreatePrivateChat(senderId, receiverId) {
     //busco para ver si existe el documento para el chat privado
     //entre los 2 usuarios, sino existe lo creo.
     const chatId = generatePrivateChatId(senderId, receiverId);
@@ -47,12 +47,14 @@ async function existOrCreatePrivateChat(senderId, receiverId) {
 
     const chatRef = doc(db, `private-chats/${chatId}`);
 
-    const chatDoc = getDoc(chatRef);
+    const chatDoc = await getDoc(chatRef);
 
     if(!chatDoc.exists()) {
-        return await setDoc(chatRef, {
-            [senderId]: true,
-            [receiverId]: true,
+        await setDoc(chatRef, {
+            users: {    
+                [senderId]: true,
+                [receiverId]: true,
+            }
         });
     }
 
@@ -68,25 +70,43 @@ async function existOrCreatePrivateChat(senderId, receiverId) {
  * @param {() => {}} callback 
  * @returns {() => void} - Función para cancelar la suscripción.
  */
-export function subscribeToPrivateChat(senderId, receiverId, callback) {
-    const chatId = generatePrivateChatId(senderId, receiverId);
+export async function subscribeToPrivateChat(senderId, receiverId, callback) {
+    try {
+        await existsOrCreatePrivateChat(senderId, receiverId);
 
-    const messagesRef = collection(db, `private-chats/${chatId}/messages`);
+        const chatId = generatePrivateChatId(senderId, receiverId);
 
-    const q = query(messagesRef, orderBy('created_at'));
+        const messagesRef = collection(db, `private-chats/${chatId}/messages`);
 
-    return onSnapshot(q, snapshot => {
-        const messages = snapshot.docs.map(aDoc => {
-            return {
-                id: aDoc.id,
-                sender_id: aDoc.data().sender_id,
-                content: aDoc.data().content,
-                created_at: aDoc.data().created_at?.toDate(),
+        const q = query(messagesRef, orderBy('created_at'));
+
+        return onSnapshot(q, snapshot => {
+            try {
+                const messages = snapshot.docs.map(aDoc => {
+                    return {
+                        id: aDoc.id,
+                        sender_id: aDoc.data().sender_id,
+                        content: aDoc.data().content,
+                        // Como created_at se crea recién cuando se grabó efectivamente en el servidor el documento, la primera
+                        // que se nos informa de un documento nuevo creado localmente, este valor está en null.
+                        // Por eso, vamos a solo pedir que se haga el toDate() si el valor *no* es null con ayuda del
+                        // "optional chaining".
+                        // Es decir, lo que sigue al operador solo se ejecuta si el valor anterior no es null/undefined, como 
+                        // acabamos de mencionar. De lo contrario, se retorna el null o undefined.
+                        created_at: aDoc.data().created_at?.toDate(),
+                    }
+                });
+
+                callback(messages);
+            } catch (error) {
+                console.error("[private-chat.js subscribeToPrivateChat callback] Error: ", error);
+                throw error;
             }
         });
-
-        callback(messages);
-    });
+    } catch (error) {
+        console.error("[private-chat.js subscribeToPrivateChat] Error: ", error);
+        throw error;
+    }
 }
 
 
