@@ -91,5 +91,16 @@ service cloud.firestore {
         
       } 
     }
+        // Regla para Publicaciones
+        match /publicaciones/{publication} {
+          allow read: if request.auth != null;
+          allow create, update: if 
+            request.auth != null &&
+            request.auth.uid == request.resource.data.user_id;
+          allow delete: if
+            request.auth != null &&
+            request.auth.uid == request.resource.data.user_id;
+    }
+    
   }
 }

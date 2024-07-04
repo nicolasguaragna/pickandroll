@@ -1,9 +1,9 @@
 Carrera: Diseño y Programación Web
 Materia: Clientes Web Mobile
-Cuatrimestre: 1ro
+Cuatrimestre: 4to
 Año: 2024
 Turno: Noche
 Comision: DWN4AV
 Apellido y Nombre: Guaragna Fernando
 Docente: Gallino Santiago
-Caracter de Entrega: 1er parcial
+Caracter de Entrega: 2do parcial
