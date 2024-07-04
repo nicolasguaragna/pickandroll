@@ -39,7 +39,7 @@ export async function createUserProfile(id, data) {
 /**
  * 
  * @param {string} id 
- * @param {{displayName: string|null}} data 
+ * @param {{displayName: string|null, photoURL: string|null}} data 
  * @returns {Promise<void>}
  */
 export async function updateUserProfile(id, data) {

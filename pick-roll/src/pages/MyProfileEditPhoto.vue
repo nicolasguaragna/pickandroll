@@ -32,7 +32,6 @@ export default {
         async handleFileUpload() {
             this.uploadingPhoto = true;
             try {
-                // Upload del archivo.
                 await updateUserPhoto(this.photo);
             } catch (error) {
             

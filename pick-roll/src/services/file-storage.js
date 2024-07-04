@@ -1,6 +1,3 @@
-// Acá vamos a definir todas las funciones que tengan que ver con la interacción con nuestro file system, que en este
-// case, es Firebase Storage.
-
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { storage } from "./firebase";
 

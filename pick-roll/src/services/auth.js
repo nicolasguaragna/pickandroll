@@ -3,6 +3,7 @@ import { auth } from "./firebase";
 import { collection, query, where, orderBy, onSnapshot, doc, Timestamp } from "firebase/firestore"; // Importa los métodos necesarios de Firestore
 import { createUserProfile, getUserProfileById, updateUserProfile } from "./user-profile";
 import { getFileURL, uploadFile } from "./file-storage";
+import { getExtensionFromFile } from "../../libraries/file";
 
 const EMPTY_USER_DATA = {
     id: null,
@@ -121,21 +122,15 @@ export async function updateUser({displayName, bio, nbaFavorites, location}) {
 export async function updateUserPhoto(photo) {
     try {
         const fileName = `users/${userData.id}/avatar.${getExtensionFromFile(photo)}`;
-        // Empezamos por subir la foto.
-        // TODO: Contemplar otro tipo de imágenes.
+
         await uploadFile(fileName, photo);
 
         const photoURL = await getFileURL(fileName);
-
-        // Guardamos la ruta en Authentication.
         const authPromise = updateProfile(auth.currentUser, {photoURL});
-        
-        // La guardamos también en Firestore en el perfil del usuario.
         const storagePromise = updateUserProfile(userData.id, {photoURL});
 
         await Promise.all([authPromise, storagePromise]);
 
-        // Actualizamos los datos de la autenticación con la ruta de la foto.
         setUserData({photoURL});
     } catch (error) {
         // TODO: Manejar el error.
@@ -143,7 +138,6 @@ export async function updateUserPhoto(photo) {
         throw error;
     }
 }
-
 
 
 /**
@@ -167,7 +161,6 @@ export function subscribeToAuth(callback){
 
     return () => {
         observers = observers.filter(obs => obs !== callback);
-        // console.log("[auth.js subscribeToAuth] Observer removido. El stack actual es:", observers);
     };
 }
 
