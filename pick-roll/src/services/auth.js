@@ -2,6 +2,7 @@ import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndP
 import { auth } from "./firebase";
 import { collection, query, where, orderBy, onSnapshot, doc, Timestamp } from "firebase/firestore"; // Importa los métodos necesarios de Firestore
 import { createUserProfile, getUserProfileById, updateUserProfile } from "./user-profile";
+import { getFileURL, uploadFile } from "./file-storage";
 
 const EMPTY_USER_DATA = {
     id: null,
@@ -57,13 +58,12 @@ onAuthStateChanged(auth, async user => {
 export async function register(email, password) {
     try {
         const userCredentials = await createUserWithEmailAndPassword(auth, email, password);
-        console.log("Usuario creado. ID:", userCredentials.user.uid);
-    
-        // Creamos perfil del usuario
-        await createUserProfile(userCredentials.user.uid, { email });
+        console.log("Usuario creado. ID: ", userCredentials.user.uid);
 
+        // Creamos el perfil del usuario.
+        await createUserProfile(userCredentials.user.uid, {email});
     } catch (error) {
-        console.error("[auth.js register] Error al crear una cuenta:", error.code);
+        console.error("[auth.js register] Error al crear una cuenta: ", error.code);
         throw error;
     }
 }
@@ -91,12 +91,6 @@ export function login(email, password) {
  * @returns {Promise<void>}
  */
 export async function updateUser({displayName, bio, nbaFavorites, location}) {
-    // Editar el perfil implica grabar algunos datos en distintos lugares.
-    // Esto se debe a que por la arquitectura de Firebase, la info del usuario la tenemos dispersa en diferentes servicios.
-    // En Firebase Authentication, nosotros solo podemos grabar los datos displayName y photoURL, que son los que la
-    // plataforma contempla.
-    // En Firestore, vamos a guardar también displayName y photoURL, para que puedan ser accedidos por nuestra web.
-    // El resto de los datos, como bio y career, vamos a tener que guardarlos solo en Firestore.
     try {
         // Pedimos actualizar los datos en Authentication.
         const authPromise = updateProfile(auth.currentUser, {displayName});
@@ -121,6 +115,38 @@ export async function updateUser({displayName, bio, nbaFavorites, location}) {
 }
 
 /**
+ * 
+ * @param {File} photo 
+ */
+export async function updateUserPhoto(photo) {
+    try {
+        const fileName = `users/${userData.id}/avatar.${getExtensionFromFile(photo)}`;
+        // Empezamos por subir la foto.
+        // TODO: Contemplar otro tipo de imágenes.
+        await uploadFile(fileName, photo);
+
+        const photoURL = await getFileURL(fileName);
+
+        // Guardamos la ruta en Authentication.
+        const authPromise = updateProfile(auth.currentUser, {photoURL});
+        
+        // La guardamos también en Firestore en el perfil del usuario.
+        const storagePromise = updateUserProfile(userData.id, {photoURL});
+
+        await Promise.all([authPromise, storagePromise]);
+
+        // Actualizamos los datos de la autenticación con la ruta de la foto.
+        setUserData({photoURL});
+    } catch (error) {
+        // TODO: Manejar el error.
+        console.error("[auth.js updateUserPhoto] Error al actualizar la foto de perfil.");
+        throw error;
+    }
+}
+
+
+
+/**
  * @returns {Promise<void>}
  */
 export function logout() {
@@ -137,12 +163,8 @@ export function logout() {
  */
 export function subscribeToAuth(callback){
     observers.push(callback);
-
-    //console.log("[auth.js subscribeToAuth] Observer suscrito. El stack actual es:", observers);
     notify(callback);
 
-    // Retorno nueva función, al ejecutarse cancela la suscripción. 
-    // Elimina del array de observers a este callback.
     return () => {
         observers = observers.filter(obs => obs !== callback);
         // console.log("[auth.js subscribeToAuth] Observer removido. El stack actual es:", observers);

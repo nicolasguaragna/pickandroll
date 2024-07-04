@@ -5,6 +5,7 @@ import Publicaciones from "../pages/Publicaciones.vue";
 import Login from "../pages/Login.vue";
 import MyProfile from "../pages/MyProfile.vue";
 import MyProfileEdit from "../pages/MyProfileEdit.vue";
+import MyProfileEditPhoto from "../pages/MyProfileEditPhoto.vue";
 import UserProfile from "../pages/UserProfile.vue";
 import Register from "../pages/Register.vue";
 import PrivateChat from "../pages/PrivateChat.vue";
@@ -18,6 +19,7 @@ const routes = [
     {path: '/registro',         component: Register, },
     {path: '/miperfil',         component: MyProfile, meta: { requiresAuth: true } },
     { path: '/miperfil/editar', component: MyProfileEdit, meta: { requiresAuth: true } },
+    { path: '/miperfil/editar/foto', component: MyProfileEditPhoto, meta: { requiresAuth: true } },
     {path: '/usuario/:id',      component: UserProfile, meta: { requiresAuth: true } },
     {path: '/usuario/:id/chat', component: PrivateChat, meta: { requiresAuth: true } },
 ];
