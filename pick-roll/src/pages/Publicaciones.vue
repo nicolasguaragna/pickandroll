@@ -1,7 +1,7 @@
 <script>
 import MainH1 from '../components/MainH1.vue';
 import MainButton from '../components/MainButton.vue';
-import { getAllPublicaciones, createPublicacion, getComments, createComment } from '../services/publicaciones.js';
+import { getAllPublicaciones, createPublicacion, subscribeToComments, createComment } from '../services/publicaciones.js';
 import { subscribeToAuth } from '../services/auth.js';
     
 export default {
@@ -17,17 +17,27 @@ export default {
       user: null,
       loading: false,
       comments: {},
+      unsubscribeFromComments: {}, // Guardamos las funciones para cancelar los listeners
       newComment: {}
     };
   },
   async created() {
     this.publicaciones = await getAllPublicaciones();
     for (let publicacion of this.publicaciones) {
-      this.comments[publicacion.id] = await getComments(publicacion.id);
+      // Configuramos el listener para los comentarios
+      this.unsubscribeFromComments[publicacion.id] = subscribeToComments(publicacion.id, (updatedComments) => {
+        this.comments[publicacion.id] = updatedComments;
+      });
     }
     subscribeToAuth(user => {
       this.user = user;
     });
+  },
+  beforeUnmount() {
+    // Cancelamos los listeners cuando el componente se desmonta
+    for (let unsubscribe of Object.values(this.unsubscribeFromComments)) {
+      unsubscribe();
+    }
   },
   methods: {
     async handleAddPublicacion() {
@@ -42,8 +52,14 @@ export default {
       this.loading = true;
       await createPublicacion(this.newPublicacion, this.user.email);
       this.publicaciones = await getAllPublicaciones();
+
+      // Agregar nuevos listeners para publicaciones recién creadas
       for (let publicacion of this.publicaciones) {
-        this.comments[publicacion.id] = await getComments(publicacion.id);
+        if (!this.unsubscribeFromComments[publicacion.id]) {
+          this.unsubscribeFromComments[publicacion.id] = subscribeToComments(publicacion.id, (updatedComments) => {
+            this.comments[publicacion.id] = updatedComments;
+          });
+        }
       }
       this.newPublicacion.title = '';
       this.newPublicacion.content = '';
@@ -59,7 +75,6 @@ export default {
         return;
       }
       await createComment(publicacionId, { content: this.newComment[publicacionId] }, this.user.email);
-      this.comments[publicacionId] = await getComments(publicacionId);
       this.newComment[publicacionId] = '';
     },
     formatDate(timestamp) {
