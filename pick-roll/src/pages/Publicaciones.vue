@@ -1,9 +1,9 @@
 <script>
 import MainH1 from '../components/MainH1.vue';
 import MainButton from '../components/MainButton.vue';
-import { getAllPublicaciones, createPublicacion, subscribeToComments, createComment } from '../services/publicaciones.js';
+import { createPublicacion, subscribeToPublicaciones, subscribeToComments, createComment } from '../services/publicaciones.js';
 import { subscribeToAuth } from '../services/auth.js';
-    
+
 export default {
   name: 'Publicaciones',
   components: { MainH1, MainButton },
@@ -17,66 +17,80 @@ export default {
       user: null,
       loading: false,
       comments: {},
-      unsubscribeFromComments: {}, // Guardamos las funciones para cancelar los listeners
+      unsubscribeFromComments: {}, // Guardamos las funciones para cancelar los listeners de comentarios
+      unsubscribeFromPublicaciones: null, // Función para cancelar el listener de publicaciones
       newComment: {}
     };
   },
-  async created() {
-    console.log("Cargando publicaciones...");
-    this.publicaciones = await getAllPublicaciones();
-    console.log("Publicaciones cargadas:", this.publicaciones);
+  created() {
+    console.log("Configurando listener en tiempo real para publicaciones...");
+    this.unsubscribeFromPublicaciones = subscribeToPublicaciones((updatedPublicaciones) => {
+      this.publicaciones = updatedPublicaciones;
+      console.log("Publicaciones actualizadas en tiempo real:", this.publicaciones);
 
-    for (let publicacion of this.publicaciones) {
-        this.unsubscribeFromComments[publicacion.id] = subscribeToComments(publicacion.id, (updatedComments) => {
+      // Configuramos listeners para comentarios de cada publicación
+      for (let publicacion of this.publicaciones) {
+        if (!this.unsubscribeFromComments[publicacion.id]) {
+          this.unsubscribeFromComments[publicacion.id] = subscribeToComments(publicacion.id, (updatedComments) => {
             this.comments[publicacion.id] = updatedComments;
-        });
+          });
+        }
+      }
+    });
+
+    // Configurar listener para el estado del usuario
+    this.unsubscribeFromAuth = subscribeToAuth(user => {
+      console.log("Usuario autenticado actualizado:", user);
+      this.user = user;
+    });
+  },
+  beforeUnmount() {
+    // Cancelar el listener de publicaciones
+    if (this.unsubscribeFromPublicaciones) {
+      this.unsubscribeFromPublicaciones();
     }
 
-    this.unsubscribeFromAuth = subscribeToAuth(user => {
-        console.log("Usuario autenticado actualizado:", user);
-        this.user = user;
-    });
-},
-beforeUnmount() {
-    // Cancelamos los listeners cuando el componente se desmonta
+    // Cancelar los listeners de comentarios
     for (let unsubscribe of Object.values(this.unsubscribeFromComments)) {
-        unsubscribe();
+      unsubscribe();
     }
+
+    // Cancelar el listener de autenticación
     if (this.unsubscribeFromAuth) {
-        this.unsubscribeFromAuth();
+      this.unsubscribeFromAuth();
     }
-},
+  },
   methods: {
     async handleAddPublicacion() {
-    console.log("Intentando agregar publicación. Estado del usuario:", this.user);
-    if (!this.newPublicacion.title || !this.newPublicacion.content) {
+      console.log("Intentando agregar publicación. Estado del usuario:", this.user);
+      if (!this.newPublicacion.title || !this.newPublicacion.content) {
         alert('Todos los campos son obligatorios');
         return;
-    }
-    if (!this.user || !this.user.email) {
+      }
+      if (!this.user || !this.user.email) {
         alert('Debe iniciar sesión para publicar');
         return;
-    }
-    this.loading = true;
-    await createPublicacion(this.newPublicacion, this.user.email);
-    console.log("Publicación creada exitosamente.");
-    this.newPublicacion.title = '';
-    this.newPublicacion.content = '';
-    this.loading = false;
-},
+      }
+      this.loading = true;
+      await createPublicacion(this.newPublicacion, this.user.email);
+      console.log("Publicación creada exitosamente.");
+      this.newPublicacion.title = '';
+      this.newPublicacion.content = '';
+      this.loading = false;
+    },
     async handleAddComment(publicacionId) {
-    console.log(`Intentando agregar comentario para la publicación ${publicacionId}. Estado del usuario:`, this.user);
-    if (!this.newComment[publicacionId]) {
+      console.log(`Intentando agregar comentario para la publicación ${publicacionId}. Estado del usuario:`, this.user);
+      if (!this.newComment[publicacionId]) {
         alert('El comentario no puede estar vacío');
         return;
-    }
-    if (!this.user || !this.user.email) {
+      }
+      if (!this.user || !this.user.email) {
         alert('Debe iniciar sesión para comentar');
         return;
-    }
-    await createComment(publicacionId, { content: this.newComment[publicacionId] }, this.user.email);
-    console.log("Comentario agregado exitosamente.");
-    this.newComment[publicacionId] = '';
+      }
+      await createComment(publicacionId, { content: this.newComment[publicacionId] }, this.user.email);
+      console.log("Comentario agregado exitosamente.");
+      this.newComment[publicacionId] = '';
     },
     formatDate(timestamp) {
       if (!timestamp) return 'Fecha no disponible';
@@ -138,9 +152,9 @@ beforeUnmount() {
                 <p class="text-sm text-gray-600">
                   Comentado por: {{ comment.userEmail }} a las {{ formatDate(comment.timestamp) }}
                 </p>
-        </li>
-      </ul>
-      <form @submit.prevent="handleAddComment(publicacion.id)" class="mt-2">
+              </li>
+            </ul>
+            <form @submit.prevent="handleAddComment(publicacion.id)" class="mt-2">
               <textarea
                 v-model="newComment[publicacion.id]"
                 class="w-full p-2 border border-gray-300 rounded resize-none"

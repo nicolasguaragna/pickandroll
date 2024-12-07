@@ -1,4 +1,3 @@
-// src/services/publicaciones.js
 import {
   onSnapshot,
   collection,
@@ -7,13 +6,34 @@ import {
   query,
   orderBy,
   serverTimestamp,
-  doc,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
 /**
- * obtengo todas las publicaciones.
- * @returns {Promise}
+ * Listener en tiempo real para las publicaciones.
+ *
+ * @param {Function} callback - Función que se ejecuta cada vez que las publicaciones cambian.
+ * @returns {Function} - Función para cancelar el listener.
+ */
+export function subscribeToPublicaciones(callback) {
+  const publicacionesQuery = query(
+    collection(db, "publicaciones"),
+    orderBy("timestamp", "desc")
+  );
+  const unsubscribe = onSnapshot(publicacionesQuery, (querySnapshot) => {
+    const publicaciones = [];
+    querySnapshot.forEach((doc) => {
+      publicaciones.push({ id: doc.id, ...doc.data() });
+    });
+    callback(publicaciones);
+  });
+  return unsubscribe;
+}
+
+/**
+ * Obtiene todas las publicaciones.
+ *
+ * @returns {Promise<Array>} - Array de publicaciones.
  */
 export async function getAllPublicaciones() {
   const publicacionesQuery = query(
@@ -23,17 +43,17 @@ export async function getAllPublicaciones() {
   const querySnapshot = await getDocs(publicacionesQuery);
   const publicaciones = [];
   querySnapshot.forEach((doc) => {
-    //añado cada documento al array de publicaciones con su id y datos
     publicaciones.push({ id: doc.id, ...doc.data() });
   });
   return publicaciones;
 }
 
 /**
- * creo una nueva publicación.
- * @param {Object} publicacion
- * @param {string} userEmail
- * @returns {Promise}
+ * Crea una nueva publicación.
+ *
+ * @param {Object} publicacion - Datos de la publicación.
+ * @param {string} userEmail - Email del usuario que crea la publicación.
+ * @returns {Promise<void>}
  */
 export async function createPublicacion(publicacion, userEmail) {
   await addDoc(collection(db, "publicaciones"), {
@@ -41,15 +61,14 @@ export async function createPublicacion(publicacion, userEmail) {
     userEmail,
     timestamp: serverTimestamp(),
   });
-  //agrego un nuevo documento a la colección publicaciones
-  //await addDoc(collection(db, "publicaciones"), publicacion);
 }
 
 /**
- * obtengo comentarios de una publicación.
- * @param {string} publicacionId
- * @param {function} callback - Función a ejecutar con los datos actualizados.
- * @returns {function} - Función para cancelar la suscripción.
+ * Listener en tiempo real para los comentarios de una publicación.
+ *
+ * @param {string} publicacionId - ID de la publicación.
+ * @param {Function} callback - Función que se ejecuta cada vez que los comentarios cambian.
+ * @returns {Function} - Función para cancelar el listener.
  */
 export function subscribeToComments(publicacionId, callback) {
   const commentsQuery = query(
@@ -67,11 +86,12 @@ export function subscribeToComments(publicacionId, callback) {
 }
 
 /**
- * creo un comentario en una publicación.
- * @param {string} publicacionId
- * @param {Object} comment
- * @param {string} userEmail
- * @returns {Promise}
+ * Crea un comentario en una publicación.
+ *
+ * @param {string} publicacionId - ID de la publicación.
+ * @param {Object} comment - Datos del comentario.
+ * @param {string} userEmail - Email del usuario que crea el comentario.
+ * @returns {Promise<void>}
  */
 export async function createComment(publicacionId, comment, userEmail) {
   await addDoc(collection(db, `publicaciones/${publicacionId}/comments`), {
@@ -81,11 +101,20 @@ export async function createComment(publicacionId, comment, userEmail) {
   });
 }
 
+/**
+ * Obtiene las últimas publicaciones.
+ *
+ * @returns {Promise<Array>} - Array de las últimas publicaciones.
+ */
 export const getUltimasPublicaciones = async () => {
-  const snapshot = await db
-    .collection("publicaciones")
-    .orderBy("timestamp", "desc")
-    .limit(3)
-    .get();
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const publicacionesQuery = query(
+    collection(db, "publicaciones"),
+    orderBy("timestamp", "desc"),
+    limit(3)
+  );
+  const querySnapshot = await getDocs(publicacionesQuery);
+  return querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
 };
