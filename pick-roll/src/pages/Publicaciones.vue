@@ -22,60 +22,61 @@ export default {
     };
   },
   async created() {
+    console.log("Cargando publicaciones...");
     this.publicaciones = await getAllPublicaciones();
+    console.log("Publicaciones cargadas:", this.publicaciones);
+
     for (let publicacion of this.publicaciones) {
-      // Configuramos el listener para los comentarios
-      this.unsubscribeFromComments[publicacion.id] = subscribeToComments(publicacion.id, (updatedComments) => {
-        this.comments[publicacion.id] = updatedComments;
-      });
+        this.unsubscribeFromComments[publicacion.id] = subscribeToComments(publicacion.id, (updatedComments) => {
+            this.comments[publicacion.id] = updatedComments;
+        });
     }
-    subscribeToAuth(user => {
-      this.user = user;
+
+    this.unsubscribeFromAuth = subscribeToAuth(user => {
+        console.log("Usuario autenticado actualizado:", user);
+        this.user = user;
     });
-  },
-  beforeUnmount() {
+},
+beforeUnmount() {
     // Cancelamos los listeners cuando el componente se desmonta
     for (let unsubscribe of Object.values(this.unsubscribeFromComments)) {
-      unsubscribe();
+        unsubscribe();
     }
-  },
+    if (this.unsubscribeFromAuth) {
+        this.unsubscribeFromAuth();
+    }
+},
   methods: {
     async handleAddPublicacion() {
-      if (!this.newPublicacion.title || !this.newPublicacion.content) {
+    console.log("Intentando agregar publicación. Estado del usuario:", this.user);
+    if (!this.newPublicacion.title || !this.newPublicacion.content) {
         alert('Todos los campos son obligatorios');
         return;
-      }
-      if (!this.user) {
+    }
+    if (!this.user || !this.user.email) {
         alert('Debe iniciar sesión para publicar');
         return;
-      }
-      this.loading = true;
-      await createPublicacion(this.newPublicacion, this.user.email);
-      this.publicaciones = await getAllPublicaciones();
-
-      // Agregar nuevos listeners para publicaciones recién creadas
-      for (let publicacion of this.publicaciones) {
-        if (!this.unsubscribeFromComments[publicacion.id]) {
-          this.unsubscribeFromComments[publicacion.id] = subscribeToComments(publicacion.id, (updatedComments) => {
-            this.comments[publicacion.id] = updatedComments;
-          });
-        }
-      }
-      this.newPublicacion.title = '';
-      this.newPublicacion.content = '';
-      this.loading = false;
-    },
+    }
+    this.loading = true;
+    await createPublicacion(this.newPublicacion, this.user.email);
+    console.log("Publicación creada exitosamente.");
+    this.newPublicacion.title = '';
+    this.newPublicacion.content = '';
+    this.loading = false;
+},
     async handleAddComment(publicacionId) {
-      if (!this.newComment[publicacionId]) {
+    console.log(`Intentando agregar comentario para la publicación ${publicacionId}. Estado del usuario:`, this.user);
+    if (!this.newComment[publicacionId]) {
         alert('El comentario no puede estar vacío');
         return;
-      }
-      if (!this.user) {
+    }
+    if (!this.user || !this.user.email) {
         alert('Debe iniciar sesión para comentar');
         return;
-      }
-      await createComment(publicacionId, { content: this.newComment[publicacionId] }, this.user.email);
-      this.newComment[publicacionId] = '';
+    }
+    await createComment(publicacionId, { content: this.newComment[publicacionId] }, this.user.email);
+    console.log("Comentario agregado exitosamente.");
+    this.newComment[publicacionId] = '';
     },
     formatDate(timestamp) {
       if (!timestamp) return 'Fecha no disponible';

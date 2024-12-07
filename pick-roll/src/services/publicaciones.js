@@ -51,7 +51,7 @@ export async function createPublicacion(publicacion, userEmail) {
  * @param {function} callback - Función a ejecutar con los datos actualizados.
  * @returns {function} - Función para cancelar la suscripción.
  */
-export function getComments(publicacionId, callback) {
+export function subscribeToComments(publicacionId, callback) {
   const commentsQuery = query(
     collection(db, `publicaciones/${publicacionId}/comments`),
     orderBy("timestamp", "desc")
