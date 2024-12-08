@@ -3,6 +3,8 @@ import {
   collection,
   getDocs,
   addDoc,
+  updateDoc,
+  doc,
   query,
   orderBy,
   serverTimestamp,
@@ -76,6 +78,21 @@ export async function createPublicacion(publicacion, userEmail, imageFile) {
     userEmail,
     imageUrl, // Agregamos la URL de la imagen (si existe)
     timestamp: serverTimestamp(),
+  });
+}
+
+/**
+ * Edita una publicación existente.
+ *
+ * @param {string} publicacionId - ID de la publicación a editar.
+ * @param {Object} updates - Datos actualizados de la publicación.
+ * @returns {Promise<void>}
+ */
+export async function updatePublicacion(publicacionId, updates) {
+  const publicacionRef = doc(db, "publicaciones", publicacionId);
+  await updateDoc(publicacionRef, {
+    ...updates,
+    updatedAt: serverTimestamp(), // Agrega una marca de tiempo para la última edición
   });
 }
 

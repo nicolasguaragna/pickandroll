@@ -1,7 +1,7 @@
 <script>
 import MainH1 from '../components/MainH1.vue';
 import MainButton from '../components/MainButton.vue';
-import { getUserPublications } from '../services/publicaciones.js';
+import { getUserPublications, updatePublicacion } from '../services/publicaciones.js';
 import { subscribeToAuth } from '../services/auth.js';
 
 export default {
@@ -12,6 +12,9 @@ export default {
       user: null,
       publicaciones: [],
       loading: true,
+      editingPublicacion: null, // Almacena la publicación que estás editando
+      editingTitle: '', // Título temporal para la edición
+      editingContent: '', // Contenido temporal para la edición
     };
   },
   async created() {
@@ -23,6 +26,39 @@ export default {
       this.loading = false;
     });
   },
+  methods: {
+    handleEdit(publicacion) {
+      this.editingPublicacion = publicacion;
+      this.editingTitle = publicacion.title;
+      this.editingContent = publicacion.content;
+    },
+    async handleSaveEdit() {
+      if (!this.editingTitle || !this.editingContent) {
+        alert('El título y el contenido no pueden estar vacíos');
+        return;
+      }
+      try {
+        await updatePublicacion(this.editingPublicacion.id, {
+          title: this.editingTitle,
+          content: this.editingContent,
+        });
+        alert('Publicación actualizada con éxito');
+        // Actualizar la lista de publicaciones localmente
+        this.publicaciones = this.publicaciones.map((pub) =>
+          pub.id === this.editingPublicacion.id
+            ? { ...pub, title: this.editingTitle, content: this.editingContent }
+            : pub
+        );
+        this.editingPublicacion = null;
+      } catch (error) {
+        console.error('Error al actualizar la publicación:', error);
+        alert('Error al actualizar la publicación. Intenta de nuevo.');
+      }
+    },
+    handleCancelEdit() {
+      this.editingPublicacion = null;
+    },
+  },
 };
 </script>
 
@@ -30,10 +66,8 @@ export default {
   <div class="container mx-auto p-4">
     <div class="flex items-center justify-between mb-4">
       <MainH1>Mis Publicaciones</MainH1>
-      <button 
-        @click="$router.push('/miperfil')"
-        class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-1 px-3 rounded text-xs"
-      >
+      <button @click="$router.push('/miperfil')"
+        class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-1 px-3 rounded text-xs">
         Volver al Perfil
       </button>
     </div>
@@ -47,28 +81,39 @@ export default {
     </div>
 
     <ul v-else>
-      <li
-        v-for="publicacion in publicaciones"
-        :key="publicacion.id"
-        class="mb-4 p-4 border border-gray-300 rounded-lg bg-white shadow-sm"
-      >
+      <li v-for="publicacion in publicaciones" :key="publicacion.id"
+        class="mb-4 p-4 border border-gray-300 rounded-lg bg-white shadow-sm">
         <h3 class="text-xl font-bold">{{ publicacion.title }}</h3>
         <p>{{ publicacion.content }}</p>
         <p class="text-sm text-gray-600">
           Publicado el: {{ new Date(publicacion.timestamp.seconds * 1000).toLocaleString() }}
         </p>
+        <div class="flex justify-end gap-2 mt-2">
+          <MainButton @click="handleEdit(publicacion)">Editar</MainButton>
+        </div>
       </li>
     </ul>
+
+    <!-- Modal de edición -->
+    <div v-if="editingPublicacion" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+      <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+        <h2 class="text-xl font-bold mb-4">Editar Publicación</h2>
+        <label for="edit-title" class="block font-bold mb-2">Título</label>
+        <input id="edit-title" v-model="editingTitle" class="w-full p-2 border border-gray-300 rounded mb-4" />
+        <label for="edit-content" class="block font-bold mb-2">Contenido</label>
+        <textarea id="edit-content" v-model="editingContent"
+          class="w-full p-2 border border-gray-300 rounded mb-4"></textarea>
+        <div class="flex justify-end gap-2">
+          <MainButton @click="handleSaveEdit">Guardar</MainButton>
+          <MainButton class="bg-gray-500 text-white" @click="handleCancelEdit">Cancelar</MainButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .container {
   max-width: 800px;
-}
-
-button {
-  float: right;
-  font-size: 0.75rem; /* Texto más pequeño */
 }
 </style>
