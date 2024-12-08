@@ -6,6 +6,8 @@ import {
   query,
   orderBy,
   serverTimestamp,
+  where,
+  limit, // Asegúrate de importar 'limit'
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -118,3 +120,23 @@ export const getUltimasPublicaciones = async () => {
     ...doc.data(),
   }));
 };
+
+/**
+ * Obtiene las publicaciones específicas de un usuario.
+ *
+ * @param {string} email - Email del usuario.
+ * @returns {Promise<Array>} - Array de publicaciones del usuario.
+ */
+export async function getUserPublications(email) {
+  const publicacionesQuery = query(
+    collection(db, "publicaciones"),
+    where("userEmail", "==", email),
+    orderBy("timestamp", "desc")
+  );
+
+  const querySnapshot = await getDocs(publicacionesQuery);
+  return querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+}
