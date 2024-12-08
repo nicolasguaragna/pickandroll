@@ -142,8 +142,7 @@ export default {
             Publicado por: {{ publicacion.userEmail }} a las {{ formatDate(publicacion.timestamp) }}
           </p>
           <img v-if="publicacion.imageUrl" :src="publicacion.imageUrl" alt="Imagen de la publicación"
-            class="w-full max-h-64 object-contain rounded-lg mt-4" />
-
+            class="w-full h-auto rounded-lg mt-4" />
           <div class="mt-4">
             <h4 class="font-bold mb-2">Comentarios</h4>
             <ul>
