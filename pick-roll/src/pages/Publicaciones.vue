@@ -24,10 +24,8 @@ export default {
     };
   },
   created() {
-    console.log('Configurando listener en tiempo real para publicaciones...');
     this.unsubscribeFromPublicaciones = subscribeToPublicaciones((updatedPublicaciones) => {
       this.publicaciones = updatedPublicaciones;
-      console.log('Publicaciones actualizadas en tiempo real:', this.publicaciones);
 
       // Configuramos listeners para comentarios de cada publicación
       for (let publicacion of this.publicaciones) {
@@ -41,7 +39,6 @@ export default {
 
     // Configurar listener para el estado del usuario
     this.unsubscribeFromAuth = subscribeToAuth((user) => {
-      console.log('Usuario autenticado actualizado:', user);
       this.user = user;
     });
   },
@@ -66,7 +63,6 @@ export default {
       this.selectedImage = event.target.files[0]; // Guardar la imagen seleccionada
     },
     async handleAddPublicacion() {
-      console.log('Intentando agregar publicación. Estado del usuario:', this.user);
       if (!this.newPublicacion.title || !this.newPublicacion.content) {
         alert('Todos los campos son obligatorios');
         return;
@@ -75,20 +71,21 @@ export default {
         alert('Debe iniciar sesión para publicar');
         return;
       }
+
       this.loading = true;
-
-      // Llamar a la función de creación con la imagen seleccionada
-      await createPublicacion(this.newPublicacion, this.user.email, this.selectedImage);
-      console.log('Publicación creada exitosamente.');
-
-      // Resetear campos
-      this.newPublicacion.title = '';
-      this.newPublicacion.content = '';
-      this.selectedImage = null;
-      this.loading = false;
+      try {
+        await createPublicacion(this.newPublicacion, this.user.email, this.selectedImage);
+        this.newPublicacion.title = '';
+        this.newPublicacion.content = '';
+        this.selectedImage = null;
+      } catch (error) {
+        console.error('Error al crear publicación:', error);
+        alert('Hubo un error al crear la publicación. Intente nuevamente.');
+      } finally {
+        this.loading = false;
+      }
     },
     async handleAddComment(publicacionId) {
-      console.log(`Intentando agregar comentario para la publicación ${publicacionId}. Estado del usuario:`, this.user);
       if (!this.newComment[publicacionId]) {
         alert('El comentario no puede estar vacío');
         return;
@@ -98,7 +95,6 @@ export default {
         return;
       }
       await createComment(publicacionId, { content: this.newComment[publicacionId] }, this.user.email);
-      console.log('Comentario agregado exitosamente.');
       this.newComment[publicacionId] = '';
     },
     formatDate(timestamp) {
@@ -146,7 +142,7 @@ export default {
             Publicado por: {{ publicacion.userEmail }} a las {{ formatDate(publicacion.timestamp) }}
           </p>
           <img v-if="publicacion.imageUrl" :src="publicacion.imageUrl" alt="Imagen de la publicación"
-            class="w-full max-h-64 object-cover rounded-lg mt-4" />
+            class="w-full max-h-64 object-contain rounded-lg mt-4" />
 
           <div class="mt-4">
             <h4 class="font-bold mb-2">Comentarios</h4>
