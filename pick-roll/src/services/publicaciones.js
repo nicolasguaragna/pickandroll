@@ -7,9 +7,10 @@ import {
   orderBy,
   serverTimestamp,
   where,
-  limit, // Asegúrate de importar 'limit'
+  limit,
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "./firebase"; // Asegúrate de que `storage` esté correctamente importado
 
 /**
  * Listener en tiempo real para las publicaciones.
@@ -55,12 +56,25 @@ export async function getAllPublicaciones() {
  *
  * @param {Object} publicacion - Datos de la publicación.
  * @param {string} userEmail - Email del usuario que crea la publicación.
+ * @param {File|null} imageFile - Archivo de imagen, si existe.
  * @returns {Promise<void>}
  */
-export async function createPublicacion(publicacion, userEmail) {
+export async function createPublicacion(publicacion, userEmail, imageFile) {
+  let imageUrl = null;
+
+  if (imageFile) {
+    const storageRef = ref(
+      storage,
+      `publicaciones/${Date.now()}_${imageFile.name}`
+    );
+    const snapshot = await uploadBytes(storageRef, imageFile);
+    imageUrl = await getDownloadURL(snapshot.ref);
+  }
+
   await addDoc(collection(db, "publicaciones"), {
     ...publicacion,
     userEmail,
+    imageUrl, // Agregamos la URL de la imagen (si existe)
     timestamp: serverTimestamp(),
   });
 }

@@ -12,21 +12,22 @@ export default {
       publicaciones: [],
       newPublicacion: {
         title: '',
-        content: ''
+        content: '',
       },
+      selectedImage: null, // Imagen seleccionada
       user: null,
       loading: false,
       comments: {},
       unsubscribeFromComments: {}, // Guardamos las funciones para cancelar los listeners de comentarios
       unsubscribeFromPublicaciones: null, // Función para cancelar el listener de publicaciones
-      newComment: {}
+      newComment: {},
     };
   },
   created() {
-    console.log("Configurando listener en tiempo real para publicaciones...");
+    console.log('Configurando listener en tiempo real para publicaciones...');
     this.unsubscribeFromPublicaciones = subscribeToPublicaciones((updatedPublicaciones) => {
       this.publicaciones = updatedPublicaciones;
-      console.log("Publicaciones actualizadas en tiempo real:", this.publicaciones);
+      console.log('Publicaciones actualizadas en tiempo real:', this.publicaciones);
 
       // Configuramos listeners para comentarios de cada publicación
       for (let publicacion of this.publicaciones) {
@@ -39,8 +40,8 @@ export default {
     });
 
     // Configurar listener para el estado del usuario
-    this.unsubscribeFromAuth = subscribeToAuth(user => {
-      console.log("Usuario autenticado actualizado:", user);
+    this.unsubscribeFromAuth = subscribeToAuth((user) => {
+      console.log('Usuario autenticado actualizado:', user);
       this.user = user;
     });
   },
@@ -61,8 +62,11 @@ export default {
     }
   },
   methods: {
+    handleImageSelection(event) {
+      this.selectedImage = event.target.files[0]; // Guardar la imagen seleccionada
+    },
     async handleAddPublicacion() {
-      console.log("Intentando agregar publicación. Estado del usuario:", this.user);
+      console.log('Intentando agregar publicación. Estado del usuario:', this.user);
       if (!this.newPublicacion.title || !this.newPublicacion.content) {
         alert('Todos los campos son obligatorios');
         return;
@@ -72,10 +76,15 @@ export default {
         return;
       }
       this.loading = true;
-      await createPublicacion(this.newPublicacion, this.user.email);
-      console.log("Publicación creada exitosamente.");
+
+      // Llamar a la función de creación con la imagen seleccionada
+      await createPublicacion(this.newPublicacion, this.user.email, this.selectedImage);
+      console.log('Publicación creada exitosamente.');
+
+      // Resetear campos
       this.newPublicacion.title = '';
       this.newPublicacion.content = '';
+      this.selectedImage = null;
       this.loading = false;
     },
     async handleAddComment(publicacionId) {
@@ -89,14 +98,14 @@ export default {
         return;
       }
       await createComment(publicacionId, { content: this.newComment[publicacionId] }, this.user.email);
-      console.log("Comentario agregado exitosamente.");
+      console.log('Comentario agregado exitosamente.');
       this.newComment[publicacionId] = '';
     },
     formatDate(timestamp) {
       if (!timestamp) return 'Fecha no disponible';
       const date = new Date(timestamp.seconds * 1000);
       return date.toLocaleString();
-    }
+    },
   },
 };
 </script>
@@ -109,22 +118,18 @@ export default {
       <form @submit.prevent="handleAddPublicacion" class="mb-4">
         <div class="mb-3">
           <label for="title" class="block mb-2 font-bold">Título</label>
-          <input
-            type="text"
-            id="title"
-            v-model="newPublicacion.title"
-            class="w-full p-2 border border-gray-300 rounded"
-            required
-          />
+          <input type="text" id="title" v-model="newPublicacion.title" class="w-full p-2 border border-gray-300 rounded"
+            required />
         </div>
         <div class="mb-3">
           <label for="content" class="block mb-2 font-bold">Contenido</label>
-          <textarea
-            id="content"
-            v-model="newPublicacion.content"
-            class="w-full p-4 border border-gray-300 rounded resize-none"
-            required
-          ></textarea>
+          <textarea id="content" v-model="newPublicacion.content"
+            class="w-full p-4 border border-gray-300 rounded resize-none" required></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="image" class="block mb-2 font-bold">Imagen (opcional)</label>
+          <input type="file" id="image" accept="image/*" @change="handleImageSelection"
+            class="w-full p-2 border border-gray-300 rounded" />
         </div>
         <MainButton :disabled="loading">{{ loading ? 'Cargando...' : 'Agregar Publicación' }}</MainButton>
       </form>
@@ -133,16 +138,15 @@ export default {
     <div>
       <h2 class="text-2xl font-bold mb-4">Listado de Publicaciones</h2>
       <ul>
-        <li
-          v-for="publicacion in publicaciones"
-          :key="publicacion.id"
-          class="mb-4 p-4 border border-gray-300 rounded-lg bg-white shadow-sm hover:shadow-md hover:border-customOrange transition duration-300 ease-in-out transform hover:-translate-y-1"
-        >
+        <li v-for="publicacion in publicaciones" :key="publicacion.id"
+          class="mb-4 p-4 border border-gray-300 rounded-lg bg-white shadow-sm hover:shadow-md hover:border-customOrange transition duration-300 ease-in-out transform hover:-translate-y-1">
           <h3 class="text-xl font-bold">{{ publicacion.title }}</h3>
           <p>{{ publicacion.content }}</p>
           <p class="text-sm text-gray-600">
             Publicado por: {{ publicacion.userEmail }} a las {{ formatDate(publicacion.timestamp) }}
           </p>
+          <img v-if="publicacion.imageUrl" :src="publicacion.imageUrl" alt="Imagen de la publicación"
+            class="w-full max-h-64 object-cover rounded-lg mt-4" />
 
           <div class="mt-4">
             <h4 class="font-bold mb-2">Comentarios</h4>
@@ -155,11 +159,9 @@ export default {
               </li>
             </ul>
             <form @submit.prevent="handleAddComment(publicacion.id)" class="mt-2">
-              <textarea
-                v-model="newComment[publicacion.id]"
+              <textarea v-model="newComment[publicacion.id]"
                 class="w-full p-2 border border-gray-300 rounded resize-none"
-                placeholder="Escribe un comentario..."
-              ></textarea>
+                placeholder="Escribe un comentario..."></textarea>
               <MainButton class="mt-2">Agregar Comentario</MainButton>
             </form>
           </div>
