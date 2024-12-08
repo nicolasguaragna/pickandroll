@@ -89,14 +89,17 @@ export default {
           Publicado el: {{ new Date(publicacion.timestamp.seconds * 1000).toLocaleString() }}
         </p>
         <div class="flex justify-end gap-2 mt-2">
-          <MainButton @click="handleEdit(publicacion)">Editar</MainButton>
+          <button @click="handleEdit(publicacion)"
+            class="bg-orange-500 hover:bg-orange-600 text-white font-bold text-l py-1 px-3 rounded">
+            Editar
+          </button>
         </div>
       </li>
     </ul>
 
     <!-- Modal de edición -->
-    <div v-if="editingPublicacion" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-      <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+    <div v-if="editingPublicacion" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
         <h2 class="text-xl font-bold mb-4">Editar Publicación</h2>
         <label for="edit-title" class="block font-bold mb-2">Título</label>
         <input id="edit-title" v-model="editingTitle" class="w-full p-2 border border-gray-300 rounded mb-4" />
@@ -104,8 +107,14 @@ export default {
         <textarea id="edit-content" v-model="editingContent"
           class="w-full p-2 border border-gray-300 rounded mb-4"></textarea>
         <div class="flex justify-end gap-2">
-          <MainButton @click="handleSaveEdit">Guardar</MainButton>
-          <MainButton class="bg-gray-500 text-white" @click="handleCancelEdit">Cancelar</MainButton>
+          <button @click="handleSaveEdit"
+            class="bg-green-500 hover:bg-green-600 text-white font-bold text-xs py-1 px-2 rounded">
+            Guardar
+          </button>
+          <button @click="handleCancelEdit"
+            class="bg-gray-500 hover:bg-gray-600 text-white font-bold text-xs py-1 px-2 rounded">
+            Cancelar
+          </button>
         </div>
       </div>
     </div>
@@ -115,5 +124,9 @@ export default {
 <style scoped>
 .container {
   max-width: 800px;
+}
+
+button {
+  font-size: 0.75rem;
 }
 </style>
