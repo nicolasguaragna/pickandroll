@@ -42,13 +42,16 @@ export default {
                     nbaFavorites: this.profileData.nbaFavorites,
                     location: this.profileData.location,
                 });
-            } catch (error) {
-                // TODO
-                console.error('[MyProfileEdit handleSubmit] Error al editar el perfil: ', error);
-            }
+            // Redirigir al perfil después de actualizar
+            this.$router.push('/miperfil');
+        } catch (error) {
+            console.error('[MyProfileEdit handleSubmit] Error al editar el perfil: ', error);
+            alert('Hubo un error al actualizar los datos. Por favor, inténtalo de nuevo.');
+        } finally {
             this.editingProfile = false;
         }
-    },
+    }
+},
     mounted() {
         this.unsubscribeFromAuth = subscribeToAuth(newUserData => {
             this.authUser = newUserData;
