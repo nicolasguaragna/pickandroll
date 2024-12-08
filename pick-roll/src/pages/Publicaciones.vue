@@ -21,6 +21,7 @@ export default {
       unsubscribeFromComments: {}, // Guardamos las funciones para cancelar los listeners de comentarios
       unsubscribeFromPublicaciones: null, // Función para cancelar el listener de publicaciones
       newComment: {},
+      expandedImageUrl: null, // Para manejar la imagen expandida
     };
   },
   created() {
@@ -97,6 +98,12 @@ export default {
       await createComment(publicacionId, { content: this.newComment[publicacionId] }, this.user.email);
       this.newComment[publicacionId] = '';
     },
+    expandImage(imageUrl) {
+      this.expandedImageUrl = imageUrl; // Almacena la URL de la imagen para expandirla
+    },
+    closeModal() {
+      this.expandedImageUrl = null; // Cierra el modal
+    },
     formatDate(timestamp) {
       if (!timestamp) return 'Fecha no disponible';
       const date = new Date(timestamp.seconds * 1000);
@@ -141,16 +148,17 @@ export default {
           <p class="text-sm text-gray-600">
             Publicado por: {{ publicacion.userEmail }} a las {{ formatDate(publicacion.timestamp) }}
           </p>
-          <img v-if="publicacion.imageUrl" :src="publicacion.imageUrl" alt="Imagen de la publicación"
-            class="w-full h-auto rounded-lg mt-4" />
+          <div v-if="publicacion.imageUrl" class="cursor-pointer" @click="expandImage(publicacion.imageUrl)">
+            <img :src="publicacion.imageUrl" alt="Imagen de la publicación"
+              class="w-full max-h-64 object-cover rounded-lg mt-4" />
+          </div>
           <div class="mt-4">
             <h4 class="font-bold mb-2">Comentarios</h4>
             <ul>
               <li v-for="comment in comments[publicacion.id]" :key="comment.id" class="mb-2">
                 <p>{{ comment.content }}</p>
-                <p class="text-sm text-gray-600">
-                  Comentado por: {{ comment.userEmail }} a las {{ formatDate(comment.timestamp) }}
-                </p>
+                <p class="text-sm text-gray-600">Comentado por: {{ comment.userEmail }} a las {{
+                  formatDate(comment.timestamp) }}</p>
               </li>
             </ul>
             <form @submit.prevent="handleAddComment(publicacion.id)" class="mt-2">
@@ -162,6 +170,12 @@ export default {
           </div>
         </li>
       </ul>
+    </div>
+
+    <!-- Modal para expandir la imagen -->
+    <div v-if="expandedImageUrl" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+      @click="closeModal">
+      <img :src="expandedImageUrl" alt="Imagen ampliada" class="max-w-full max-h-full rounded-lg" />
     </div>
   </div>
 </template>
