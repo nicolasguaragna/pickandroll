@@ -27,6 +27,9 @@ export default {
             currentPassword: '',
             newPassword: '',
             confirmPassword: '',
+            showCurrentPassword: false, // Controla la visibilidad de la contraseña actual
+            showNewPassword: false, // Controla la visibilidad de la nueva contraseña
+            showConfirmPassword: false, // Controla la visibilidad de la confirmación de contraseña
         };
     },
     methods: {
@@ -65,6 +68,15 @@ export default {
             this.newPassword = '';
             this.confirmPassword = '';
         },
+        togglePasswordVisibility(type) {
+            if (type === 'current') {
+                this.showCurrentPassword = !this.showCurrentPassword;
+            } else if (type === 'new') {
+                this.showNewPassword = !this.showNewPassword;
+            } else if (type === 'confirm') {
+                this.showConfirmPassword = !this.showConfirmPassword;
+            }
+        },
     },
     mounted() {
         this.unsubscribeFromAuth = subscribeToAuth(newUserData => this.authUser = newUserData);
@@ -98,15 +110,36 @@ export default {
         <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
             <h2 class="text-xl font-bold mb-4">Cambiar Contraseña</h2>
             <form @submit.prevent="handleChangePassword">
-                <label for="currentPassword" class="block mb-2 font-bold">Contraseña Actual</label>
-                <input id="currentPassword" type="password" v-model="currentPassword"
-                    class="w-full p-2 border border-gray-300 rounded mb-4" required />
-                <label for="newPassword" class="block mb-2 font-bold">Nueva Contraseña</label>
-                <input id="newPassword" type="password" v-model="newPassword"
-                    class="w-full p-2 border border-gray-300 rounded mb-4" required />
-                <label for="confirmPassword" class="block mb-2 font-bold">Confirmar Nueva Contraseña</label>
-                <input id="confirmPassword" type="password" v-model="confirmPassword"
-                    class="w-full p-2 border border-gray-300 rounded mb-4" required />
+                <div class="mb-4 relative">
+                    <label for="currentPassword" class="block mb-2 font-bold">Contraseña Actual</label>
+                    <input :type="showCurrentPassword ? 'text' : 'password'" id="currentPassword"
+                        v-model="currentPassword" class="w-full p-2 border border-gray-300 rounded mb-4" required />
+                    <button type="button" @click="togglePasswordVisibility('current')"
+                        class="absolute right-3 top-10 text-gray-500">
+                        {{ showCurrentPassword ? '🏀' : '⬤' }}
+                    </button>
+                </div>
+
+                <div class="mb-4 relative">
+                    <label for="newPassword" class="block mb-2 font-bold">Nueva Contraseña</label>
+                    <input :type="showNewPassword ? 'text' : 'password'" id="newPassword" v-model="newPassword"
+                        class="w-full p-2 border border-gray-300 rounded mb-4" required />
+                    <button type="button" @click="togglePasswordVisibility('new')"
+                        class="absolute right-3 top-10 text-gray-500">
+                        {{ showNewPassword ? '🏀' : '⬤' }}
+                    </button>
+                </div>
+
+                <div class="mb-4 relative">
+                    <label for="confirmPassword" class="block mb-2 font-bold">Confirmar Nueva Contraseña</label>
+                    <input :type="showConfirmPassword ? 'text' : 'password'" id="confirmPassword"
+                        v-model="confirmPassword" class="w-full p-2 border border-gray-300 rounded mb-4" required />
+                    <button type="button" @click="togglePasswordVisibility('confirm')"
+                        class="absolute right-3 top-10 text-gray-500">
+                        {{ showConfirmPassword ? '🏀' : '⬤' }}
+                    </button>
+                </div>
+
                 <div class="flex justify-end gap-2">
                     <button type="submit" class="bg-green-500 text-white font-bold py-2 px-4 rounded">Guardar</button>
                     <button @click="handleCancelChangePassword"
