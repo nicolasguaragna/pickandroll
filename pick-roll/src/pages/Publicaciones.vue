@@ -200,7 +200,7 @@ export default {
         <!-- Mostrar Comentarios -->
         <div>
           <h4 class="font-semibold mt-4 mb-2">Comentarios</h4>
-          <ul>
+          <ul class="space-y-4">
             <li v-for="comment in comments[publicacion.id]" :key="comment.id" class="border-b py-2 text-gray-700">
               <div v-if="editingComment === comment.id">
                 <textarea v-model="editCommentForm.content" placeholder="Editar comentario" class="input"></textarea>
