@@ -167,10 +167,9 @@ export default {
           Publicado por {{ publicacion.userEmail }}
         </p>
 
-        <!-- Imagen con tamaño fijo -->
-        <div class="flex justify-center mb-4">
+        <div class="w-40 h-28 mx-auto overflow-hidden rounded-lg border border-gray-300">
           <img v-if="publicacion.imageUrl" :src="publicacion.imageUrl" @click="expandImage(publicacion.imageUrl)"
-            class="cursor-pointer w-full max-w-md h-48 object-cover rounded" alt="Publicación" />
+            class="w-full h-full object-cover cursor-pointer" alt="Publicación" />
         </div>
 
         <!-- Botones para Admin -->
