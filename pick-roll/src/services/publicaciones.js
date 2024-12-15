@@ -4,6 +4,7 @@ import {
   getDocs,
   addDoc,
   updateDoc,
+  deleteDoc,
   doc,
   query,
   orderBy,
@@ -25,32 +26,13 @@ export function subscribeToPublicaciones(callback) {
     collection(db, "publicaciones"),
     orderBy("timestamp", "desc")
   );
-  const unsubscribe = onSnapshot(publicacionesQuery, (querySnapshot) => {
+  return onSnapshot(publicacionesQuery, (querySnapshot) => {
     const publicaciones = [];
     querySnapshot.forEach((doc) => {
       publicaciones.push({ id: doc.id, ...doc.data() });
     });
     callback(publicaciones);
   });
-  return unsubscribe;
-}
-
-/**
- * Obtiene todas las publicaciones.
- *
- * @returns {Promise<Array>} - Array de publicaciones.
- */
-export async function getAllPublicaciones() {
-  const publicacionesQuery = query(
-    collection(db, "publicaciones"),
-    orderBy("timestamp", "desc")
-  );
-  const querySnapshot = await getDocs(publicacionesQuery);
-  const publicaciones = [];
-  querySnapshot.forEach((doc) => {
-    publicaciones.push({ id: doc.id, ...doc.data() });
-  });
-  return publicaciones;
 }
 
 /**
@@ -76,7 +58,7 @@ export async function createPublicacion(publicacion, userEmail, imageFile) {
   await addDoc(collection(db, "publicaciones"), {
     ...publicacion,
     userEmail,
-    imageUrl, // Agregamos la URL de la imagen (si existe)
+    imageUrl,
     timestamp: serverTimestamp(),
   });
 }
@@ -92,8 +74,19 @@ export async function updatePublicacion(publicacionId, updates) {
   const publicacionRef = doc(db, "publicaciones", publicacionId);
   await updateDoc(publicacionRef, {
     ...updates,
-    updatedAt: serverTimestamp(), // Agrega una marca de tiempo para la última edición
+    updatedAt: serverTimestamp(),
   });
+}
+
+/**
+ * Elimina una publicación.
+ *
+ * @param {string} publicacionId - ID de la publicación a eliminar.
+ * @returns {Promise<void>}
+ */
+export async function deletePublicacion(publicacionId) {
+  const publicacionRef = doc(db, "publicaciones", publicacionId);
+  await deleteDoc(publicacionRef);
 }
 
 /**
@@ -126,12 +119,48 @@ export function subscribeToComments(publicacionId, callback) {
  * @param {string} userEmail - Email del usuario que crea el comentario.
  * @returns {Promise<void>}
  */
-export async function createComment(publicacionId, comment, userEmail) {
+export async function addComment(publicacionId, comment, userEmail) {
   await addDoc(collection(db, `publicaciones/${publicacionId}/comments`), {
     ...comment,
     userEmail,
     timestamp: serverTimestamp(),
   });
+}
+
+/**
+ * Edita un comentario existente.
+ *
+ * @param {string} publicacionId - ID de la publicación.
+ * @param {string} commentId - ID del comentario a editar.
+ * @param {Object} updates - Datos actualizados del comentario.
+ * @returns {Promise<void>}
+ */
+export async function updateComment(publicacionId, commentId, updates) {
+  const commentRef = doc(
+    db,
+    `publicaciones/${publicacionId}/comments`,
+    commentId
+  );
+  await updateDoc(commentRef, {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Elimina un comentario.
+ *
+ * @param {string} publicacionId - ID de la publicación.
+ * @param {string} commentId - ID del comentario a eliminar.
+ * @returns {Promise<void>}
+ */
+export async function deleteComment(publicacionId, commentId) {
+  const commentRef = doc(
+    db,
+    `publicaciones/${publicacionId}/comments`,
+    commentId
+  );
+  await deleteDoc(commentRef);
 }
 
 /**
