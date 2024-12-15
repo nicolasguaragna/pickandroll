@@ -137,91 +137,135 @@ export default {
 </script>
 
 <template>
-  <div class="container mx-auto p-4">
+  <div class="w-3/4 mx-auto p-4">
     <MainH1>Publicaciones</MainH1>
 
     <!-- Formulario para agregar publicaciones -->
-    <form @submit.prevent="handleAddPublicacion" class="mb-4">
+    <form @submit.prevent="handleAddPublicacion" class="mb-4 bg-gray-100 p-4 rounded shadow">
       <div>
-        <label>Título</label>
+        <label class="block text-gray-700 font-semibold">Título</label>
         <input v-model="newPublicacion.title" required class="input" />
       </div>
       <div>
-        <label>Contenido</label>
+        <label class="block text-gray-700 font-semibold">Contenido</label>
         <textarea v-model="newPublicacion.content" required class="input"></textarea>
       </div>
       <div>
-        <label>Imagen</label>
-        <input type="file" @change="handleImageSelection" />
+        <label class="block text-gray-700 font-semibold">Imagen</label>
+        <input type="file" @change="handleImageSelection" class="mt-2" />
       </div>
-      <MainButton>Agregar Publicación</MainButton>
+      <MainButton class="mt-2">Agregar Publicación</MainButton>
     </form>
 
     <!-- Listado de Publicaciones -->
     <ul>
-      <li v-for="publicacion in publicaciones" :key="publicacion.id" class="card">
-        <h3>{{ publicacion.title }}</h3>
-        <p>{{ publicacion.content }}</p>
-        <p>Publicado por {{ publicacion.userEmail }}</p>
-        <img v-if="publicacion.imageUrl" :src="publicacion.imageUrl" @click="expandImage(publicacion.imageUrl)" />
+      <li v-for="publicacion in publicaciones" :key="publicacion.id" class="card bg-white rounded shadow p-4 mb-6">
+        <!-- Título y Contenido -->
+        <h3 class="text-xl font-bold mb-2">{{ publicacion.title }}</h3>
+        <p class="text-gray-700 mb-2">{{ publicacion.content }}</p>
+        <p class="text-sm text-gray-500 mb-4">
+          Publicado por {{ publicacion.userEmail }}
+        </p>
+
+        <!-- Imagen con tamaño fijo -->
+        <div class="flex justify-center mb-4">
+          <img v-if="publicacion.imageUrl" :src="publicacion.imageUrl" @click="expandImage(publicacion.imageUrl)"
+            class="cursor-pointer w-full max-w-md h-48 object-cover rounded" alt="Publicación" />
+        </div>
+
+        <!-- Botones para Admin -->
+        <div v-if="isUserAdmin" class="flex space-x-2 mb-4">
+          <MainButton class="text-sm py-1 px-3" @click="startEditingPublicacion(publicacion)">
+            Editar publicación
+          </MainButton>
+          <MainButton class="text-sm py-1 px-3 bg-red-500 hover:bg-red-600 text-white"
+            @click="handleDeletePublicacion(publicacion.id)">
+            Eliminar publicación
+          </MainButton>
+        </div>
 
         <!-- Editar publicación -->
-        <div v-if="editingPublicacion === publicacion.id">
+        <div v-if="editingPublicacion === publicacion.id" class="space-y-2">
           <input v-model="editForm.title" placeholder="Editar título" class="input" />
           <textarea v-model="editForm.content" placeholder="Editar contenido" class="input"></textarea>
-          <MainButton @click="handleEditPublicacion(publicacion.id)">Guardar</MainButton>
-          <MainButton @click="editingPublicacion = null">Cancelar</MainButton>
-        </div>
-        <div v-else v-if="isUserAdmin">
-          <MainButton @click="startEditingPublicacion(publicacion)">Editar publicación</MainButton>
-          <MainButton @click="handleDeletePublicacion(publicacion.id)">Eliminar publicación</MainButton>
+          <div class="flex space-x-2">
+            <MainButton class="text-sm py-1 px-3" @click="handleEditPublicacion(publicacion.id)">
+              Guardar
+            </MainButton>
+            <MainButton class="text-sm py-1 px-3 bg-gray-300 hover:bg-gray-400" @click="editingPublicacion = null">
+              Cancelar
+            </MainButton>
+          </div>
         </div>
 
-        <!-- Mostrar y editar comentarios -->
+        <!-- Mostrar Comentarios -->
         <div>
-          <h4>Comentarios</h4>
+          <h4 class="font-semibold mt-4 mb-2">Comentarios</h4>
           <ul>
-            <li v-for="comment in comments[publicacion.id]" :key="comment.id">
+            <li v-for="comment in comments[publicacion.id]" :key="comment.id" class="border-b py-2 text-gray-700">
               <div v-if="editingComment === comment.id">
                 <textarea v-model="editCommentForm.content" placeholder="Editar comentario" class="input"></textarea>
-                <MainButton @click="handleEditComment(publicacion.id, comment.id)">Guardar</MainButton>
-                <MainButton @click="editingComment = null">Cancelar</MainButton>
+                <div class="flex space-x-2 mt-2">
+                  <MainButton class="text-sm py-1 px-3" @click="handleEditComment(publicacion.id, comment.id)">
+                    Guardar
+                  </MainButton>
+                  <MainButton class="text-sm py-1 px-3 bg-gray-300 hover:bg-gray-400" @click="editingComment = null">
+                    Cancelar
+                  </MainButton>
+                </div>
               </div>
               <div v-else>
                 <p>{{ comment.content }} - {{ comment.userEmail }}</p>
-                <div v-if="isUserAdmin">
-                  <MainButton @click="startEditingComment(comment)">Editar comentario</MainButton>
-                  <MainButton @click="handleDeleteComment(publicacion.id, comment.id)">Eliminar comentario</MainButton>
+                <div v-if="isUserAdmin" class="flex space-x-2 mt-2">
+                  <MainButton class="text-sm py-1 px-3" @click="startEditingComment(comment)">
+                    Editar comentario
+                  </MainButton>
+                  <MainButton class="text-sm py-1 px-3 bg-red-500 hover:bg-red-600 text-white"
+                    @click="handleDeleteComment(publicacion.id, comment.id)">
+                    Eliminar comentario
+                  </MainButton>
                 </div>
               </div>
             </li>
           </ul>
-          <form @submit.prevent="handleAddComment(publicacion.id)">
-            <textarea v-model="newComment[publicacion.id]" placeholder="Escribe un comentario..."></textarea>
-            <MainButton>Agregar comentario</MainButton>
+          <!-- Formulario para agregar comentario -->
+          <form @submit.prevent="handleAddComment(publicacion.id)" class="mt-2">
+            <textarea v-model="newComment[publicacion.id]" placeholder="Escribe un comentario..."
+              class="w-full border p-2 rounded"></textarea>
+            <MainButton class="text-sm py-1 px-4 mt-2">Agregar comentario</MainButton>
           </form>
         </div>
       </li>
     </ul>
+
+    <!-- Modal para expandir la imagen -->
+    <div v-if="expandedImageUrl" @click="closeModal"
+      class="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center">
+      <img :src="expandedImageUrl" class="max-w-3xl max-h-screen rounded shadow-lg" />
+    </div>
   </div>
 </template>
 
 <style scoped>
-.container {
-  max-width: 800px;
-}
-
 .input {
-  width: 100%;
+  border: 1px solid #ccc;
   padding: 8px;
-  margin-bottom: 10px;
-  border: 1px solid gray;
   border-radius: 4px;
+  width: 100%;
+  margin-top: 4px;
 }
 
 .card {
-  border: 1px solid gray;
-  margin-bottom: 20px;
-  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+img {
+  transition: transform 0.2s ease;
+}
+
+img:hover {
+  transform: scale(1.02);
 }
 </style>
