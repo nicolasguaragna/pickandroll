@@ -167,7 +167,7 @@ export default {
           Publicado por {{ publicacion.userEmail }}
         </p>
 
-        <div class="w-40 h-28 mx-auto overflow-hidden rounded-lg border border-gray-300">
+        <div class="w-full h-60 mx-auto overflow-hidden rounded-lg border border-gray-300">
           <img v-if="publicacion.imageUrl" :src="publicacion.imageUrl" @click="expandImage(publicacion.imageUrl)"
             class="w-full h-full object-cover cursor-pointer" alt="Publicación" />
         </div>
