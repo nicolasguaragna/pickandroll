@@ -5,6 +5,7 @@ import {
   signOut,
   updateProfile,
   updatePassword,
+  getIdTokenResult,
 } from "firebase/auth";
 import { db, auth } from "./firebase";
 import {
@@ -213,11 +214,32 @@ export async function changeUserPassword(newPassword) {
  * Observador de autenticación
  */
 export function subscribeToAuth(callback) {
-  observers.push(callback);
-  callback({ ...userData });
-  return () => {
-    observers = observers.filter((obs) => obs !== callback);
-  };
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      try {
+        // Recargar el token para obtener los claims más recientes
+        const idTokenResult = await user.getIdTokenResult(true);
+
+        const isAdmin = idTokenResult.claims.admin || false;
+
+        callback({
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          isAdmin,
+          fullyLoaded: true,
+        });
+      } catch (error) {
+        console.error("Error al obtener los custom claims:", error);
+        callback(null);
+      }
+    } else {
+      callback(null);
+    }
+  });
+
+  return unsubscribe; // Devuelve la función de cancelación
 }
 
 /**

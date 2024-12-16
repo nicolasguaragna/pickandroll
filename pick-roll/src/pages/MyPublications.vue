@@ -19,10 +19,17 @@ export default {
   },
   async created() {
     subscribeToAuth(async (currentUser) => {
+      console.log("Usuario autenticado detectado:", currentUser);
+
       if (currentUser) {
-        this.user = currentUser;
+        this.user = { ...currentUser }; // Asegura que el usuario se asigna
+        console.log("UID del usuario autenticado:", this.user.uid);
+
         this.publicaciones = await getUserPublications(this.user.email);
+      } else {
+        console.error("No se encontró un usuario autenticado.");
       }
+
       this.loading = false;
     });
   },
@@ -37,13 +44,27 @@ export default {
         alert('El título y el contenido no pueden estar vacíos');
         return;
       }
+
+      console.log("Datos que se envían a Firestore:", {
+        title: this.editingTitle,
+        content: this.editingContent,
+        user_id: this.user?.uid,
+      });
+
+      if (!this.user || !this.user.uid) {
+        console.error("Error: No se pudo identificar al usuario.");
+        alert("No se pudo identificar al usuario. Intenta iniciar sesión nuevamente.");
+        return;
+      }
+
       try {
         await updatePublicacion(this.editingPublicacion.id, {
           title: this.editingTitle,
           content: this.editingContent,
+          user_id: this.user.uid, // Incluye el UID validado
         });
         alert('Publicación actualizada con éxito');
-        // Actualizar la lista de publicaciones localmente
+
         this.publicaciones = this.publicaciones.map((pub) =>
           pub.id === this.editingPublicacion.id
             ? { ...pub, title: this.editingTitle, content: this.editingContent }
@@ -54,7 +75,8 @@ export default {
         console.error('Error al actualizar la publicación:', error);
         alert('Error al actualizar la publicación. Intenta de nuevo.');
       }
-    },
+    }
+    ,
     handleCancelEdit() {
       this.editingPublicacion = null;
     },

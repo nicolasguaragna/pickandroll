@@ -68,16 +68,35 @@ export default {
         },
     },
     async mounted() {
-        // Cargar datos de autenticación
-        this.unsubscribeFromAuth = subscribeToAuth(newUserData => this.authUser = newUserData);
+        this.unsubscribeFromAuth = subscribeToAuth(async (currentUser) => {
+            if (currentUser) {
+                this.authUser = currentUser; // Asigna el objeto personalizado
+                console.log("Usuario autenticado detectado:", this.authUser);
 
-        // Verificar si el usuario tiene el rol de admin
-        this.isAdmin = await isAdminCustomClaim();
-        console.log(this.isAdmin ? "El usuario es admin." : "El usuario no es admin.");
+                // Obtener los custom claims directamente desde auth.currentUser
+                if (auth.currentUser) {
+                    try {
+                        const idTokenResult = await auth.currentUser.getIdTokenResult(true);
+                        this.isAdmin = idTokenResult.claims.admin || false;
+                        console.log(this.isAdmin ? "El usuario es admin." : "El usuario no es admin.");
+                    } catch (error) {
+                        console.error("Error al obtener los custom claims:", error);
+                        this.isAdmin = false;
+                    }
+                }
+            } else {
+                console.error("No se encontró un usuario autenticado.");
+                this.$router.push("/iniciar-sesion");
+            }
+        });
     },
     unmounted() {
-        this.unsubscribeFromAuth();
+        if (this.unsubscribeFromAuth) {
+            this.unsubscribeFromAuth();
+        }
     },
+
+
 };
 </script>
 
