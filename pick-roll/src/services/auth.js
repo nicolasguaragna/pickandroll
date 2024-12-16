@@ -53,15 +53,18 @@ onAuthStateChanged(auth, async (user) => {
     console.log("Usuario autenticado detectado:", user);
 
     // Obtener rol desde Firestore
-    const userRef = doc(db, "users", user.uid); // Corregido el uso de db
+    const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
     const userRole = userSnap.exists() ? userSnap.data().role : "user";
+
+    // Verificar rol admin en Custom Claims
+    const isAdminClaim = await isAdminCustomClaim();
 
     setUserData({
       id: user.uid,
       email: user.email,
       displayName: user.displayName,
-      role: userRole,
+      role: isAdminClaim ? "admin" : userRole, // Prioriza el rol desde Custom Claims
       fullyLoaded: true,
     });
   } else {
@@ -80,6 +83,22 @@ export async function isAdmin() {
   const userSnap = await getDoc(userRef);
 
   return userSnap.exists() && userSnap.data().role === "admin";
+}
+
+/**
+ * Verifica si el usuario autenticado tiene el rol "admin" basado en Custom Claims.
+ * @returns {Promise<boolean>}
+ */
+export async function isAdminCustomClaim() {
+  if (!auth.currentUser) return false;
+
+  try {
+    const idTokenResult = await auth.currentUser.getIdTokenResult();
+    return !!idTokenResult.claims.admin; // Devuelve true si el claim "admin" existe
+  } catch (error) {
+    console.error("Error al obtener Custom Claims:", error);
+    return false;
+  }
 }
 
 /**

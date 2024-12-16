@@ -3,8 +3,8 @@ import Loader from '../components/Loader.vue';
 import MainH1 from '../components/MainH1.vue';
 import TextWithDefault from '../components/TextWithDefault.vue';
 import UserProfileData from '../components/UserProfileData.vue';
-import { subscribeToAuth, changeUserPassword } from '../services/auth'; // Importa las funciones necesarias
-import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"; // Métodos para reautenticar
+import { subscribeToAuth, changeUserPassword, isAdminCustomClaim } from '../services/auth'; // Importa la función
+import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { auth } from '../services/firebase';
 
 export default {
@@ -23,13 +23,14 @@ export default {
                 fullyLoaded: false,
             },
             unsubscribeFromAuth: () => { },
-            showPasswordModal: false, // Modal para cambiar contraseña
+            isAdmin: false, // Variable para almacenar si el usuario es admin
+            showPasswordModal: false,
             currentPassword: '',
             newPassword: '',
             confirmPassword: '',
-            showCurrentPassword: false, // Controla la visibilidad de la contraseña actual
-            showNewPassword: false, // Controla la visibilidad de la nueva contraseña
-            showConfirmPassword: false, // Controla la visibilidad de la confirmación de contraseña
+            showCurrentPassword: false,
+            showNewPassword: false,
+            showConfirmPassword: false,
         };
     },
     methods: {
@@ -45,18 +46,10 @@ export default {
                     this.currentPassword
                 );
 
-                // Reautenticar al usuario
                 await reauthenticateWithCredential(auth.currentUser, credential);
-
-                // Cambiar la contraseña
                 await changeUserPassword(this.newPassword);
                 alert('Contraseña actualizada con éxito.');
-                this.showPasswordModal = false;
-
-                // Limpiar campos
-                this.currentPassword = '';
-                this.newPassword = '';
-                this.confirmPassword = '';
+                this.handleCancelChangePassword();
             } catch (error) {
                 console.error('Error al cambiar la contraseña:', error);
                 alert('Hubo un error al cambiar la contraseña. Verifique sus datos.');
@@ -69,17 +62,18 @@ export default {
             this.confirmPassword = '';
         },
         togglePasswordVisibility(type) {
-            if (type === 'current') {
-                this.showCurrentPassword = !this.showCurrentPassword;
-            } else if (type === 'new') {
-                this.showNewPassword = !this.showNewPassword;
-            } else if (type === 'confirm') {
-                this.showConfirmPassword = !this.showConfirmPassword;
-            }
+            if (type === 'current') this.showCurrentPassword = !this.showCurrentPassword;
+            if (type === 'new') this.showNewPassword = !this.showNewPassword;
+            if (type === 'confirm') this.showConfirmPassword = !this.showConfirmPassword;
         },
     },
-    mounted() {
+    async mounted() {
+        // Cargar datos de autenticación
         this.unsubscribeFromAuth = subscribeToAuth(newUserData => this.authUser = newUserData);
+
+        // Verificar si el usuario tiene el rol de admin
+        this.isAdmin = await isAdminCustomClaim();
+        console.log(this.isAdmin ? "El usuario es admin." : "El usuario no es admin.");
     },
     unmounted() {
         this.unsubscribeFromAuth();
@@ -99,6 +93,11 @@ export default {
                 class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded">
                 Cambiar Contraseña
             </button>
+        </div>
+
+        <!-- Mensaje exclusivo para administradores -->
+        <div v-if="isAdmin" class="mt-4 p-2 bg-green-100 rounded border border-green-300">
+            <p class="text-green-700 font-semibold">¡Eres administrador! 🎉 Tienes acceso a funciones avanzadas.</p>
         </div>
 
         <UserProfileData :user="authUser" />
