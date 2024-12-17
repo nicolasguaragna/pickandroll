@@ -1,8 +1,4 @@
-import {
-  createRouter,
-  createWebHashHistory,
-  createWebHistory,
-} from "vue-router";
+import { createRouter, createWebHashHistory } from "vue-router";
 import Home from "../pages/Home.vue";
 import Chat from "../pages/Chat.vue";
 import Publicaciones from "../pages/Publicaciones.vue";
@@ -13,8 +9,9 @@ import MyProfileEditPhoto from "../pages/MyProfileEditPhoto.vue";
 import UserProfile from "../pages/UserProfile.vue";
 import Register from "../pages/Register.vue";
 import PrivateChat from "../pages/PrivateChat.vue";
-import { subscribeToAuth } from "../services/auth";
 import MyPublications from "../pages/MyPublications.vue";
+import { auth } from "../services/firebase"; // Firebase auth
+import { getUserData } from "../services/auth";
 
 const routes = [
   { path: "/", component: Home },
@@ -55,25 +52,44 @@ const routes = [
 ];
 
 const router = createRouter({
-  routes,
   history: createWebHashHistory(),
+  routes,
 });
 
-//configuracion de restriccion por estado de autenticacion.
-let authUser = {
-  id: null,
-  email: null,
-};
+// Guard de navegación para proteger rutas
+let authReady = false;
+let authUser = null;
 
-subscribeToAuth((newUserData) => (authUser = newUserData));
+function waitForAuthState() {
+  return new Promise((resolve) => {
+    if (authReady) {
+      resolve(authUser);
+    } else {
+      // Escuchar una sola vez el cambio de autenticación
+      import("firebase/auth").then(({ onAuthStateChanged }) => {
+        onAuthStateChanged(auth, (user) => {
+          authUser = user ? { id: user.uid, email: user.email } : null;
+          authReady = true;
+          resolve(authUser);
+        });
+      });
+    }
+  });
+}
 
-//se ejecuta antes de cada cambio de ruta.
-router.beforeEach((to, from) => {
-  if (authUser.id === null && to.meta.requiresAuth) {
-    return {
-      path: "/iniciar-sesion",
-    };
+// Guard que se ejecuta antes de cada navegación
+router.beforeEach(async (to, from, next) => {
+  const user = await waitForAuthState();
+
+  if (to.meta.requiresAuth && !user) {
+    return next({ path: "/iniciar-sesion" });
   }
+
+  if ((to.path === "/iniciar-sesion" || to.path === "/registro") && user) {
+    return next({ path: "/miperfil" });
+  }
+
+  next();
 });
 
 export default router;
