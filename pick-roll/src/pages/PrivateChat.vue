@@ -35,12 +35,12 @@ export default {
     },
     methods: {
         sendMessage() {
-            if (!this.authUser?.id || !this.user?.id) {
+            if (!this.authUser?.uid || !this.user?.id) {
                 console.error("IDs de usuario no disponibles.");
                 return;
             }
 
-            sendPrivateChatMessage(this.authUser.id, this.user.id, this.newMessage.content)
+            sendPrivateChatMessage(this.authUser.uid, this.user.id, this.newMessage.content)
                 .catch(error => console.error("Error al enviar el mensaje:", error));
             this.newMessage.content = "";
         },
@@ -60,24 +60,9 @@ export default {
 
                 // Verifica que los IDs sean válidos
                 const receiverId = this.$route.params.id;
-                if (!this.authUser.id || !receiverId) {
+                if (!this.authUser.uid || !receiverId) {
                     console.error("IDs inválidos detectados. No se puede suscribir al chat.");
                     return;
-                }
-
-                // Solo ahora suscribo al chat
-                this.messagesLoaded = false;
-                try {
-                    this.unsubscribeFromChat = await subscribeToPrivateChat(
-                        this.authUser.id,
-                        receiverId,
-                        (newMessages) => {
-                            this.messagesLoaded = true;
-                            this.messages = newMessages;
-                        }
-                    );
-                } catch (error) {
-                    console.error("Error al suscribirse al chat:", error);
                 }
 
                 // Cargar datos del usuario receptor
@@ -86,6 +71,22 @@ export default {
                     this.userLoaded = true;
                 } catch (error) {
                     console.error("Error al cargar el perfil del usuario receptor:", error);
+                    return;
+                }
+
+                // Suscribirme al chat
+                this.messagesLoaded = false;
+                try {
+                    this.unsubscribeFromChat = await subscribeToPrivateChat(
+                        this.authUser.uid,
+                        receiverId,
+                        (newMessages) => {
+                            this.messagesLoaded = true;
+                            this.messages = newMessages;
+                        }
+                    );
+                } catch (error) {
+                    console.error("Error al suscribirse al chat:", error);
                 }
             } else {
                 console.error("Usuario no autenticado. Redirigiendo...");
@@ -112,9 +113,9 @@ export default {
             <div class="border rounded p-4 min-h-[300px]">
                 <ul v-if="messagesLoaded" class="flex flex-col items-start">
                     <li v-for="message in messages" :key="message.id" class="mb-4 rounded" :class="{
-                        'bg-orange-200': message.sender_id === authUser.id,
-                        'self-end': message.sender_id === authUser.id,
-                        'bg-gray-200': message.sender_id !== authUser.id,
+                        'bg-orange-200': message.sender_id === authUser.uid,
+                        'self-end': message.sender_id === authUser.uid,
+                        'bg-gray-200': message.sender_id !== authUser.uid,
                     }">
                         <p>{{ message.content }}</p>
                         <p v-if="message.created_at != null">{{ formatDate(message.created_at) }}</p>
