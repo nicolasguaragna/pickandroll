@@ -229,9 +229,9 @@ export function subscribeToAuth(callback) {
         const idTokenResult = await user.getIdTokenResult(true);
         const isAdmin = idTokenResult.claims.admin || false;
 
-        // Notifica al callback con datos actualizados
+        // Devuelve el ID como "id" para que coincida con tu código
         callback({
-          uid: user.uid,
+          id: user.uid,
           email: user.email,
           displayName: userDataFromFirestore.displayName || user.displayName,
           bio: userDataFromFirestore.bio || "",

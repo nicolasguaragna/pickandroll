@@ -6,4 +6,4 @@ Turno: Noche
 Comision: DWN4AV
 Apellido y Nombre: Guaragna Fernando
 Docente: Gallino Santiago
-Caracter de Entrega: 2do parcial
+Caracter de Entrega: Final

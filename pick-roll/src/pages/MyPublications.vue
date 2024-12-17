@@ -23,7 +23,7 @@ export default {
 
       if (currentUser) {
         this.user = { ...currentUser }; // Asegura que el usuario se asigna
-        console.log("UID del usuario autenticado:", this.user.uid);
+        console.log("UID del usuario autenticado:", this.user.id);
 
         this.publicaciones = await getUserPublications(this.user.email);
       } else {
@@ -48,10 +48,10 @@ export default {
       console.log("Datos que se envían a Firestore:", {
         title: this.editingTitle,
         content: this.editingContent,
-        user_id: this.user?.uid,
+        user_id: this.user?.id, // Aquí se usa "id" en lugar de "uid"
       });
 
-      if (!this.user || !this.user.uid) {
+      if (!this.user || !this.user.id) {
         console.error("Error: No se pudo identificar al usuario.");
         alert("No se pudo identificar al usuario. Intenta iniciar sesión nuevamente.");
         return;
@@ -61,7 +61,7 @@ export default {
         await updatePublicacion(this.editingPublicacion.id, {
           title: this.editingTitle,
           content: this.editingContent,
-          user_id: this.user.uid, // Incluye el UID validado
+          user_id: this.user.id, // Aquí también
         });
         alert('Publicación actualizada con éxito');
 
@@ -75,8 +75,7 @@ export default {
         console.error('Error al actualizar la publicación:', error);
         alert('Error al actualizar la publicación. Intenta de nuevo.');
       }
-    }
-    ,
+    },
     handleCancelEdit() {
       this.editingPublicacion = null;
     },
