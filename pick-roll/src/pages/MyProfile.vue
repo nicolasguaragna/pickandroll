@@ -32,12 +32,12 @@ export default {
                 return;
             }
 
-            try {
+            try {// Credenciales para reautenticación
                 const credential = EmailAuthProvider.credential(
                     this.authUser.email,
                     this.currentPassword
                 );
-                await reauthenticateWithCredential(auth.currentUser, credential);
+                await reauthenticateWithCredential(auth.currentUser, credential);// Reautentica al usuario
                 await changeUserPassword(this.newPassword);
                 alert('Contraseña actualizada con éxito.');
                 this.handleCancelChangePassword();
@@ -46,21 +46,21 @@ export default {
                 alert('Hubo un error al cambiar la contraseña. Verifique sus datos.');
             }
         },
-        // Método para cancelar el cambio de contraseña
+        // Cancela el proceso de cambio de contraseña y limpia los campos
         handleCancelChangePassword() {
             this.showPasswordModal = false;
             this.currentPassword = '';
             this.newPassword = '';
             this.confirmPassword = '';
         },
-        togglePasswordVisibility(type) {
+        togglePasswordVisibility(type) {// Alterna la visibilidad de los campos de contraseña
             if (type === 'current') this.showCurrentPassword = !this.showCurrentPassword;
             if (type === 'new') this.showNewPassword = !this.showNewPassword;
             if (type === 'confirm') this.showConfirmPassword = !this.showConfirmPassword;
         },
     },
     mounted() {
-        // Suscripción a los cambios de autenticación
+        // Suscripción a cambios en la autenticación del usuario
         this.unsubscribeFromAuth = subscribeToAuth(async (currentUser) => {
             if (currentUser) {
                 this.authUser = {
@@ -68,7 +68,7 @@ export default {
                 };
                 console.log("Usuario autenticado detectado:", this.authUser);
 
-                // Verificar si el usuario tiene rol admin
+                // Verifica si el usuario tiene rol admin
                 try {
                     const idTokenResult = await auth.currentUser.getIdTokenResult(true);
                     this.isAdmin = idTokenResult.claims.admin || false;

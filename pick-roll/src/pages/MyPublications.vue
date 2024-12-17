@@ -35,11 +35,13 @@ export default {
   },
   methods: {
     handleEdit(publicacion) {
+      // Prepara una publicación para ser editada
       this.editingPublicacion = publicacion;
       this.editingTitle = publicacion.title;
       this.editingContent = publicacion.content;
     },
     async handleSaveEdit() {
+      // Valida que los campos no estén vacíos
       if (!this.editingTitle || !this.editingContent) {
         alert('El título y el contenido no pueden estar vacíos');
         return;
@@ -51,6 +53,7 @@ export default {
         user_id: this.user?.id, // Aquí se usa "id" en lugar de "uid"
       });
 
+      // Verifica que haya un usuario autenticado con un ID válido
       if (!this.user || !this.user.id) {
         console.error("Error: No se pudo identificar al usuario.");
         alert("No se pudo identificar al usuario. Intenta iniciar sesión nuevamente.");
@@ -58,6 +61,7 @@ export default {
       }
 
       try {
+        // Actualiza la publicación en Firestore
         await updatePublicacion(this.editingPublicacion.id, {
           title: this.editingTitle,
           content: this.editingContent,
@@ -65,12 +69,13 @@ export default {
         });
         alert('Publicación actualizada con éxito');
 
+        // Actualiza la lista local de publicaciones
         this.publicaciones = this.publicaciones.map((pub) =>
           pub.id === this.editingPublicacion.id
             ? { ...pub, title: this.editingTitle, content: this.editingContent }
             : pub
         );
-        this.editingPublicacion = null;
+        this.editingPublicacion = null;  // Limpia el estado de edición
       } catch (error) {
         console.error('Error al actualizar la publicación:', error);
         alert('Error al actualizar la publicación. Intenta de nuevo.');

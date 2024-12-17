@@ -12,6 +12,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { getFileURL, uploadFile } from "./file-storage";
 import { getExtensionFromFile } from "../../libraries/file";
 
+// Definicion de un objeto vacío para inicializar los datos del usuario
 const EMPTY_USER_DATA = {
   id: null,
   email: null,
@@ -24,6 +25,7 @@ const EMPTY_USER_DATA = {
   fullyLoaded: false,
 };
 
+// Variables globales para mantener el estado del usuario y observers
 let userData = EMPTY_USER_DATA;
 let observers = [];
 
@@ -175,7 +177,7 @@ export async function updateUser({ displayName, bio, nbaFavorites, location }) {
 }
 
 /**
- * Actualiza la foto del usuario
+ * Actualiza la foto del perfil del usuario.
  */
 export async function updateUserPhoto(photo) {
   try {

@@ -10,7 +10,7 @@ export default {
     components: { MainH1, MainLabel, MainButton },
     data() {
         return {
-            // Nos trae los datos ya definidos del usuario autenticado
+            // Datos del usuario autenticado que se inicializan vacíos
             authUser: {
                 id: '',
                 email: '',
@@ -20,8 +20,9 @@ export default {
                 location: '',
                 photoURL: null,
             },
-            unsubscribeFromAuth: () => { },
+            unsubscribeFromAuth: () => { }, // Función para cancelar la suscripción al estado de autenticación
 
+            // Datos del perfil que se mostrarán en el formulario de edición
             profileData: {
                 displayName: '',
                 bio: '',
