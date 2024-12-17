@@ -3,7 +3,7 @@ import Loader from '../components/Loader.vue';
 import MainH1 from '../components/MainH1.vue';
 import TextWithDefault from '../components/TextWithDefault.vue';
 import UserProfileData from '../components/UserProfileData.vue';
-import { subscribeToAuth, changeUserPassword, isAdminCustomClaim } from '../services/auth'; // Importa la función
+import { subscribeToAuth, changeUserPassword } from '../services/auth';
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { auth } from '../services/firebase';
 
@@ -12,16 +12,7 @@ export default {
     components: { MainH1, TextWithDefault, Loader, UserProfileData },
     data() {
         return {
-            authUser: {
-                id: null,
-                email: null,
-                displayName: null,
-                bio: null,
-                nbaFavorites: null,
-                location: null,
-                photoURL: null,
-                fullyLoaded: false,
-            },
+            authUser: null, // Inicializado como null
             unsubscribeFromAuth: () => { },
             isAdmin: false, // Variable para almacenar si el usuario es admin
             showPasswordModal: false,
@@ -34,6 +25,7 @@ export default {
         };
     },
     methods: {
+        // Método para cambiar contraseña
         async handleChangePassword() {
             if (this.newPassword !== this.confirmPassword) {
                 alert('Las contraseñas no coinciden.');
@@ -45,7 +37,6 @@ export default {
                     this.authUser.email,
                     this.currentPassword
                 );
-
                 await reauthenticateWithCredential(auth.currentUser, credential);
                 await changeUserPassword(this.newPassword);
                 alert('Contraseña actualizada con éxito.');
@@ -55,6 +46,7 @@ export default {
                 alert('Hubo un error al cambiar la contraseña. Verifique sus datos.');
             }
         },
+        // Método para cancelar el cambio de contraseña
         handleCancelChangePassword() {
             this.showPasswordModal = false;
             this.currentPassword = '';
@@ -67,22 +59,22 @@ export default {
             if (type === 'confirm') this.showConfirmPassword = !this.showConfirmPassword;
         },
     },
-    async mounted() {
+    mounted() {
+        // Suscripción a los cambios de autenticación
         this.unsubscribeFromAuth = subscribeToAuth(async (currentUser) => {
             if (currentUser) {
-                this.authUser = currentUser; // Asigna el objeto personalizado
+                this.authUser = {
+                    ...currentUser, // Actualiza el estado local con datos actualizados
+                };
                 console.log("Usuario autenticado detectado:", this.authUser);
 
-                // Obtener los custom claims directamente desde auth.currentUser
-                if (auth.currentUser) {
-                    try {
-                        const idTokenResult = await auth.currentUser.getIdTokenResult(true);
-                        this.isAdmin = idTokenResult.claims.admin || false;
-                        console.log(this.isAdmin ? "El usuario es admin." : "El usuario no es admin.");
-                    } catch (error) {
-                        console.error("Error al obtener los custom claims:", error);
-                        this.isAdmin = false;
-                    }
+                // Verificar si el usuario tiene rol admin
+                try {
+                    const idTokenResult = await auth.currentUser.getIdTokenResult(true);
+                    this.isAdmin = idTokenResult.claims.admin || false;
+                    console.log(this.isAdmin ? "El usuario es admin." : "El usuario no es admin.");
+                } catch (error) {
+                    console.error("Error al obtener los custom claims:", error);
                 }
             } else {
                 console.error("No se encontró un usuario autenticado.");
@@ -95,13 +87,11 @@ export default {
             this.unsubscribeFromAuth();
         }
     },
-
-
 };
 </script>
 
 <template>
-    <template v-if="authUser.fullyLoaded">
+    <template v-if="authUser">
         <div class="flex items-end gap-4">
             <MainH1>Mi Perfil</MainH1>
             <router-link class="mb-4 text-blue-700 underline" to="/miperfil/editar">Editar</router-link>

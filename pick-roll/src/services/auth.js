@@ -8,21 +8,7 @@ import {
   getIdTokenResult,
 } from "firebase/auth";
 import { db, auth } from "./firebase";
-import {
-  collection,
-  doc,
-  getDoc,
-  query,
-  where,
-  orderBy,
-  onSnapshot,
-  Timestamp,
-} from "firebase/firestore";
-import {
-  createUserProfile,
-  getUserProfileById,
-  updateUserProfile,
-} from "./user-profile";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { getFileURL, uploadFile } from "./file-storage";
 import { getExtensionFromFile } from "../../libraries/file";
 
@@ -34,7 +20,7 @@ const EMPTY_USER_DATA = {
   nbaFavorites: null,
   location: null,
   photoURL: null,
-  role: null, // Añadimos el campo "role"
+  role: null,
   fullyLoaded: false,
 };
 
@@ -65,6 +51,7 @@ onAuthStateChanged(auth, async (user) => {
       id: user.uid,
       email: user.email,
       displayName: user.displayName,
+      photoURL: user.photoURL,
       role: isAdminClaim ? "admin" : userRole, // Prioriza el rol desde Custom Claims
       fullyLoaded: true,
     });
@@ -114,8 +101,10 @@ export async function register(email, password) {
     );
     console.log("Usuario creado. ID:", userCredentials.user.uid);
 
-    // Guarda el rol por defecto como "user"
-    await createUserProfile(userCredentials.user.uid, { email, role: "user" });
+    await updateDoc(doc(db, "users", userCredentials.user.uid), {
+      email,
+      role: "user",
+    });
   } catch (error) {
     console.error("Error al registrar usuario:", error);
     throw error;
@@ -149,24 +138,39 @@ export function logout() {
  */
 export async function updateUser({ displayName, bio, nbaFavorites, location }) {
   try {
+    // Verifica si el usuario autenticado está disponible
+    if (!auth.currentUser) {
+      throw new Error("No hay un usuario autenticado.");
+    }
+
+    const uid = auth.currentUser.uid; // Obtén el UID actual del usuario
+
+    // Actualiza el perfil de autenticación de Firebase
     const authPromise = updateProfile(auth.currentUser, { displayName });
-    const firestorePromise = updateUserProfile(userData.id, {
+
+    // Actualiza el documento en Firestore usando el UID como referencia
+    const firestorePromise = updateDoc(doc(db, "users", uid), {
       displayName,
       bio,
       nbaFavorites,
       location,
     });
+
+    // Espera a que ambas operaciones finalicen
     await Promise.all([authPromise, firestorePromise]);
 
+    // Actualiza localmente los datos del usuario
     setUserData({
       displayName,
       bio,
       nbaFavorites,
       location,
     });
+
+    console.log("Perfil actualizado con éxito.");
   } catch (error) {
     console.error("Error al actualizar perfil:", error);
-    throw error;
+    throw error; // Lanza el error para manejarlo externamente
   }
 }
 
@@ -175,16 +179,16 @@ export async function updateUser({ displayName, bio, nbaFavorites, location }) {
  */
 export async function updateUserPhoto(photo) {
   try {
-    const fileName = `users/${userData.id}/avatar.${getExtensionFromFile(
-      photo
-    )}`;
+    if (!auth.currentUser) throw new Error("No hay un usuario autenticado.");
+
+    const fileName = `users/${
+      auth.currentUser.uid
+    }/avatar.${getExtensionFromFile(photo)}`;
     await uploadFile(fileName, photo);
 
     const photoURL = await getFileURL(fileName);
-    const authPromise = updateProfile(auth.currentUser, { photoURL });
-    const storagePromise = updateUserProfile(userData.id, { photoURL });
-
-    await Promise.all([authPromise, storagePromise]);
+    await updateProfile(auth.currentUser, { photoURL });
+    await updateDoc(doc(db, "users", auth.currentUser.uid), { photoURL });
 
     setUserData({ photoURL });
   } catch (error) {
@@ -198,12 +202,9 @@ export async function updateUserPhoto(photo) {
  */
 export async function changeUserPassword(newPassword) {
   try {
-    if (auth.currentUser) {
-      await updatePassword(auth.currentUser, newPassword);
-      console.log("Contraseña actualizada con éxito.");
-    } else {
-      throw new Error("No hay usuario autenticado.");
-    }
+    if (!auth.currentUser) throw new Error("No hay usuario autenticado.");
+    await updatePassword(auth.currentUser, newPassword);
+    console.log("Contraseña actualizada con éxito.");
   } catch (error) {
     console.error("Error al cambiar la contraseña:", error);
     throw error;
@@ -217,21 +218,31 @@ export function subscribeToAuth(callback) {
   const unsubscribe = onAuthStateChanged(auth, async (user) => {
     if (user) {
       try {
-        // Recargar el token para obtener los claims más recientes
-        const idTokenResult = await user.getIdTokenResult(true);
+        const userDocRef = doc(db, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
 
+        // Asegura que traes los datos actualizados de Firestore
+        const userDataFromFirestore = userDocSnap.exists()
+          ? userDocSnap.data()
+          : {};
+
+        const idTokenResult = await user.getIdTokenResult(true);
         const isAdmin = idTokenResult.claims.admin || false;
 
+        // Notifica al callback con datos actualizados
         callback({
           uid: user.uid,
           email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
+          displayName: userDataFromFirestore.displayName || user.displayName,
+          bio: userDataFromFirestore.bio || "",
+          nbaFavorites: userDataFromFirestore.nbaFavorites || "",
+          location: userDataFromFirestore.location || "",
+          photoURL: user.photoURL || "",
           isAdmin,
           fullyLoaded: true,
         });
       } catch (error) {
-        console.error("Error al obtener los custom claims:", error);
+        console.error("Error al obtener datos actualizados:", error);
         callback(null);
       }
     } else {
@@ -239,7 +250,7 @@ export function subscribeToAuth(callback) {
     }
   });
 
-  return unsubscribe; // Devuelve la función de cancelación
+  return unsubscribe;
 }
 
 /**
